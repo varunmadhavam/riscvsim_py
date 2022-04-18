@@ -1,10 +1,11 @@
-
+import opcode
 from bus import Bus
 from ctypes import *
+from isa import Isa,Instructions
 
 class Cpu:
-    def __init__(self):
-        self.pc=c_uint(0)
+    def __init__(self,reset,sysbus:Bus):
+        self.pc=c_uint(reset)
         self.ir=c_uint(0)
         self.mar=c_uint(0)
         self.mdr=c_uint(0)
@@ -17,11 +18,15 @@ class Cpu:
         self.func3=c_ubyte(0)
         self.func7=c_ubyte(0)
         self.shamt=c_ubyte(0)
-        self.bus = Bus()
+        self.bus = sysbus
+        self.res=c_uint(0)
+        self.isa=Isa()
+
     def fetch(self):
         self.mar=self.pc
         self.mdr=self.bus.read(self.mar)
         self.ir.value=self.mdr
+
     def decode(self):
         self.opcode.value=self.ir.value&0x0000007f
         self.rd.value=(self.ir.value&0x00000f80)>>7
@@ -31,9 +36,17 @@ class Cpu:
         self.func3.value=(self.ir.value&0x00007000)>>12
         self.shamt.value=self.rs2.value
         self.genimmediate()
+        print(self.isa.getInstructions(self.opcode,self.func3,self.func7))
 
+    def execute(self):
+        pass
 
+    def memaccess(self):
+        pass
 
+    def writeback(self):
+        pass
+    
     def genimmediate(self):
         if(self.opcode.value==0b00110111 or self.opcode.value==0b00010111): #U type
             self.imm.value=self.ir.value&0xfffff000
@@ -64,10 +77,14 @@ class Cpu:
             return 0
         else:
             return 1
-
-if __name__ == "__main__":
-    cpu = Cpu()
-    cpu.ir.value=0x8306c693
+        
+def Tests():
+    bus=Bus()
+    cpu = Cpu(0,bus)
+    cpu.ir.value=0x00000073
     cpu.decode()
     tmp=c_int(cpu.imm.value)
     print(hex(cpu.imm.value),tmp.value)
+
+if __name__ == "__main__":
+    Tests()
