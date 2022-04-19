@@ -127,7 +127,7 @@ class Isa():
             0b01110011:self.func3MAPSYS
         }
 
-    def getInstructions(self,opcode:c_ubyte,func3:c_ubyte,func7:c_ubyte):
+    def getInstruction(self,opcode:c_ubyte,func3:c_ubyte,func7:c_ubyte):
         inst=self.opcodeMAP[opcode.value]
         if type(inst) is Instructions:
             return inst
