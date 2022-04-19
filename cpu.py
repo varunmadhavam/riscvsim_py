@@ -1,11 +1,15 @@
-import opcode
 from bus import Bus
 from ctypes import *
 from isa import Isa,Instructions
 
 class Cpu:
     def __init__(self,reset,sysbus:Bus):
-        self.pc=c_uint(reset)
+        #cpu gp registers
+        self.cpuregs=[0]*32
+        self.XLEN=32
+
+        #cpu other registers
+        self.pc=c_int(reset)
         self.ir=c_uint(0)
         self.mar=c_uint(0)
         self.mdr=c_uint(0)
@@ -18,12 +22,12 @@ class Cpu:
         self.func3=c_ubyte(0)
         self.func7=c_ubyte(0)
         self.shamt=c_ubyte(0)
-        self.bus = sysbus
         self.res=c_uint(0)
         self.currentInstruction=Instructions.noimp
-        self.isa=Isa()
-        self.cpuregs=[0]*32
 
+        self.isa=Isa()
+        self.bus = sysbus
+        
         self.opcodeExeMAP={
             Instructions.add:self.exeADD,
             Instructions.addi:self.exeADDI,
@@ -33,9 +37,9 @@ class Cpu:
         }
 
     def fetch(self):
-        self.mar=self.pc
-        self.mdr=self.bus.read(self.mar)
-        self.ir.value=self.mdr
+        self.mar.value=self.pc.value
+        self.mdr.value=self.bus.read(self.mar.value)
+        self.ir.value=self.mdr.value
 
     def decode(self):
         self.opcode.value=self.ir.value&0x0000007f
@@ -48,18 +52,262 @@ class Cpu:
         self.currentInstruction=self.isa.getInstruction(self.opcode,self.func3,self.func7)
         self.genimmediate()
         
-
     def execute(self):
-        self.opcodeExeMAP[currentInstruction]()
-        pass
+        self.opcodeExeMAP[self.currentInstruction]()
 
     def memaccess(self):
-        pass
+        if(self.currentInstruction==Instructions.lb):
+            self.mdr.value=self.bus.read(self.mar.value)
+            size=self.mar.value&0x3
+            if(size==0):
+                self.res.value=self.mdr.value&0xff
+            elif(size==1):
+                self.res.value=(self.mdr.value&0xff00)>>8
+            elif(size==2):
+                self.res.value=(self.mdr.value&0xff0000)>>16
+            else:
+                self.res.value=(self.mdr.value&0xff000000)>>24
+                
+            if(self.res.value&0x80):
+                    self.res.value|=0xffffff00
+            return 0
+
+        elif(self.currentInstruction==Instructions.lbu):
+            self.mdr.value=self.bus.read(self.mar.value)
+            size=self.mar.value&0x3
+            if(size==0):
+                self.res.value=self.mdr.value&0xff
+            elif(size==1):
+                self.res.value=(self.mdr.value&0xff00)>>8
+            elif(size==2):
+                self.res.value=(self.mdr.value&0xff0000)>>16
+            else:
+                self.res.value=(self.mdr.value&0xff000000)>>24
+            return 0
+
+        elif(self.currentInstruction==Instructions.lh):
+            size=self.mar.value&0x3
+            if(size==0):
+                self.mdr.value=self.bus.read(self.mar.value)
+                self.res.value=self.mdr.value&0xffff
+            elif(size==2):
+                self.mdr.value=self.bus.read(self.mar.value)
+                self.res.value=(self.mdr.value&0xffff0000)>>16
+            else:
+                print("Error: Unaligned half word read")
+                return 1
+                
+            if(self.res.value&0x8000):
+                    self.res.value|=0xffff0000
+
+        elif(self.currentInstruction==Instructions.lhu):
+            size=self.mar.value&0x3
+            if(size==0):
+                self.mdr.value=self.bus.read(self.mar.value)
+                self.res.value=self.mdr.value&0xffff
+            elif(size==2):
+                self.mdr.value=self.bus.read(self.mar.value)
+                self.res.value=(self.mdr.value&0xffff0000)>>16
+            else:
+                print("Error: Unaligned half word read")
+                return 1
+
+        elif(self.currentInstruction==Instructions.lw):
+            size=self.mar.value&0x3
+            if(size==0):
+                self.mdr.value=self.bus.read(self.mar.value)
+                self.res.value=self.mdr.value
+            else:
+                print("Error: Unaligned word read")
+                return 1
+        else:
+            pass
 
     def writeback(self):
-        pass
+        if(self.rd.value==0):
+            print("Error :  Write to reg X0")
+            return 1
+        if(self.currentInstruction not in(Instructions.beq,Instructions.bge,Instructions.bgeu,\
+            Instructions.blt,Instructions.bltu,Instructions.bne,Instructions.sb,Instructions.sh,Instructions.sw)):
+            self.cpuregs[self.rd.value]=self.res.value
+            return 0
+        else:
+            return 0
 
-    #generate the immediate value based on the instruction
+    ##execution functions for each instruction
+    def exeADD(self):
+        self.res=self.cpuregs[self.rs1.value]+self.cpuregs[self.rs2.value]
+        self.pc.value+=4
+
+    def exeADDI(self):
+        self.res=self.cpuregs[self.rs1.value]+self.imm.value
+        self.pc.value+=4
+
+    def exeAND(self):
+        self.res=self.cpuregs[self.rs1.value]&self.cpuregs[self.rs2.value]
+        self.pc.value+=4
+
+    def exeANDI(self):
+        self.res=self.cpuregs[self.rs1.value]&self.imm.value
+        self.pc.value+=4
+
+    def exeAUIPC(self):
+        self.res=self.pc.value+self.imm.value
+        self.pc.value+=4
+
+    def exeBEQ(self):
+        if(self.cpuregs[self.rs1.value]==self.cpuregs[self.rs2.value]):
+            self.pc.value+=self.imm.value
+        else:
+            self.pc.value+=4
+
+    def exeBGE(self):
+        if(self.cpuregs[self.rs1.value]>=self.cpuregs[self.rs2.value]):
+            self.pc.value+=self.imm.value
+        else:
+            self.pc.value+=4
+
+    def exeBGEU(self):
+        tmp1=c_uint(self.cpuregs[self.rs1.value])
+        tmp2=c_uint(self.cpuregs[self.rs2.value])
+        if(tmp1.value>=tmp2.value):
+            self.pc.value+=self.imm.value
+        else:
+            self.pc.value+=4
+
+    def exeBLT(self):
+        if(self.cpuregs[self.rs1.value]<self.cpuregs[self.rs2.value]):
+            self.pc.value+=self.imm.value
+        else:
+            self.pc.value+=4
+
+    def exeBLTU(self):
+        tmp1=c_uint(self.cpuregs[self.rs1.value])
+        tmp2=c_uint(self.cpuregs[self.rs2.value])
+        if(tmp1.value<tmp2.value):
+            self.pc.value+=self.imm.value
+        else:
+            self.pc.value+=4
+
+    def exeBNE(self):
+        if(self.cpuregs[self.rs1.value]!=self.cpuregs[self.rs2.value]):
+            self.pc.value+=self.imm.value
+        else:
+            self.pc.value+=4
+
+    def exeJAL(self):
+        self.res=self.pc.value+4
+        self.pc.value+=self.imm.value
+
+    def exeJALR(self):
+        self.res=self.pc.value+4
+        self.pc.value=(self.imm.value+self.cpuregs[self.rs1.value])&0xfffffffe
+
+    def exeLB(self):
+        self.mar.value=self.imm.value+self.cpuregs[self.rs1.value]
+        self.pc.value+=4
+
+    def exeLBU(self):
+        self.mar.value=self.imm.value+self.cpuregs[self.rs1.value]
+        self.pc.value+=4
+
+    def exeLH(self):
+        self.mar.value=self.imm.value+self.cpuregs[self.rs1.value]
+        self.pc.value+=4
+
+    def exeLHU(self):
+        self.mar.value=self.imm.value+self.cpuregs[self.rs1.value]
+        self.pc.value+=4
+
+    def exeLUI(self):
+        self.res=self.imm.value
+        self.pc.value+=4
+
+    def exeLW(self):
+        self.mar.value=self.imm.value+self.cpuregs[self.rs1.value]
+        self.pc.value+=4
+    
+    def exeOR(self):
+        self.res=self.cpuregs[self.rs1.value]|self.cpuregs[self.rs2.value]
+        self.pc.value+=4
+
+    def exeORI(self):
+        self.res=self.cpuregs[self.rs1.value]|self.imm.value
+        self.pc.value+=4
+    
+    def exeSB(self):
+        self.mar.value=self.imm.value+self.cpuregs[self.rs1.value]
+        self.pc.value+=4
+    
+    def exeSH(self):
+        self.mar.value=self.imm.value+self.cpuregs[self.rs1.value]
+        self.pc.value+=4
+    
+    def exeSW(self):
+        self.mar.value=self.imm.value+self.cpuregs[self.rs1.value]
+        self.pc.value+=4
+
+    def exeSLL(self):
+        self.res=self.cpuregs[self.rs1.value]<<(self.cpuregs[self.rs2.value]%self.XLEN)
+        self.pc.value+=4
+
+    def exeSLLI(self):
+        self.res=self.cpuregs[self.rs1.value]<<self.shamt
+        self.pc.value+=4
+
+    def exeSLT(self):
+        if(self.cpuregs[self.rs1.value]<self.cpuregs[self.rs2.value]):
+            self.res=1
+        else:
+            self.res=0
+        self.pc.value+=4
+
+    def exeSLTI(self):
+        if(self.cpuregs[self.rs1.value]<self.imm.value):
+            self.res=1
+        else:
+            self.res=0
+        self.pc.value+=4
+    
+    def exeSLTIU(self):
+        tmp1=c_uint(self.cpuregs[self.rs1.value])
+        tmp2=c_uint(self.cpuregs[self.rs2.value])
+        if(tmp1.value<tmp2.value):
+            self.res=1
+        else:
+            self.res=0
+        self.pc.value+=4
+    
+    def exeSLTU(self):
+        tmp1=c_uint(self.cpuregs[self.rs1.value])
+        tmp2=c_uint(self.imm.value)
+        if(tmp1.value<tmp2.value):
+            self.res=1
+        else:
+            self.res=0
+        self.pc.value+=4
+    
+    def exeSRL(self):
+        self.res=self.cpuregs[self.rs1.value]>>(self.cpuregs[self.rs2.value]%self.XLEN)
+        self.pc.value+=4
+
+    def exeSRLI(self):
+        self.res=self.cpuregs[self.rs1.value]>>self.shamt
+        self.pc.value+=4
+    
+    def exeSUB(self):
+        self.res=self.cpuregs[self.rs1.value]-self.cpuregs[self.rs2.value]
+        self.pc.value+=4
+    
+    def exeXOR(self):
+        self.res=self.cpuregs[self.rs1.value]^self.cpuregs[self.rs2.value]
+        self.pc.value+=4
+
+    def exeXORI(self):
+        self.res=self.cpuregs[self.rs1.value]^self.imm.value
+        self.pc.value+=4
+
+     #generate the immediate value based on the instruction
     def genimmediate(self):
         if(self.opcode.value==0b00110111 or self.opcode.value==0b00010111): #U type
             self.imm.value=self.ir.value&0xfffff000
@@ -85,30 +333,16 @@ class Cpu:
             self.imm.value=((tmp.value>>20)&0xffffffe0)|((self.ir.value>>7)&0x0000001f)
         else:
             pass
-
-    ##execution functions for each instruction
-    def exeLUI(self):
-        self.cpuregs[self.rd.value]=self.imm
-        self.pc+=4
-    def exeADD(self):
-        self.cpuregs[self.rd]=self.cpuregs[self.rs1]+self.cpuregs[self.rs2]
-        self.pc+=4
-    def exeADDI(self):
-        self.cpuregs[self.rd]=self.cpuregs[self.rs1]+self.imm
-        self.pc+=4
-    def exeAND(self):
-        self.cpuregs[self.rd]=self.cpuregs[self.rs1]&self.cpuregs[self.rs2]
-        self.pc+=4
-
         
 def Tests():
     bus=Bus()
     cpu = Cpu(0,bus)
-    cpu.ir.value=0x00000073
+    cpu.ir.value=0x00177713
     cpu.decode()
     tmp=c_int(cpu.imm.value)
     print(hex(cpu.imm.value),tmp.value)
     print(cpu.currentInstruction)
+    cpu.execute()
 
 if __name__ == "__main__":
     Tests()
