@@ -140,13 +140,13 @@ class Isa():
                 if type(inst) is Instructions:
                     return inst
                 else:
-                    print("Error: Unimplemented Instructions encountered3\n")
+                    print("Error: Unimplemented Instructions encountered\n")
                     return Instructions.noimp
             else:
-                print("Error: Unimplemented Instructions encountered2\n")
+                print("Error: Unimplemented Instructions encountered\n")
                 return Instructions.noimp
         else:
-            print("Error: Unimplemented Instructions encountered1\n")
+            print("Error: Unimplemented Instructions encountered\n")
             return Instructions.noimp
 
 

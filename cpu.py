@@ -56,70 +56,45 @@ class Cpu:
         self.opcodeExeMAP[self.currentInstruction]()
 
     def memaccess(self):
-        if(self.currentInstruction==Instructions.lb):
+        if(self.currentInstruction in (Instructions.lb,Instructions.lbu,Instructions.lh,Instructions.lhu,Instructions.lw)):
             self.mdr.value=self.bus.read(self.mar.value)
-            size=self.mar.value&0x3
-            if(size==0):
-                self.res.value=self.mdr.value&0xff
-            elif(size==1):
-                self.res.value=(self.mdr.value&0xff00)>>8
-            elif(size==2):
-                self.res.value=(self.mdr.value&0xff0000)>>16
-            else:
-                self.res.value=(self.mdr.value&0xff000000)>>24
-                
-            if(self.res.value&0x80):
-                    self.res.value|=0xffffff00
             return 0
 
-        elif(self.currentInstruction==Instructions.lbu):
-            self.mdr.value=self.bus.read(self.mar.value)
-            size=self.mar.value&0x3
-            if(size==0):
-                self.res.value=self.mdr.value&0xff
-            elif(size==1):
-                self.res.value=(self.mdr.value&0xff00)>>8
-            elif(size==2):
-                self.res.value=(self.mdr.value&0xff0000)>>16
+        elif(self.currentInstruction==Instructions.sb):
+            loc=self.mar.value&0x3
+            if(loc==0):
+                size=0x1
+            elif(loc==1):
+                size=0x2
+            elif(loc==2):
+                size=0x4
             else:
-                self.res.value=(self.mdr.value&0xff000000)>>24
+                size=0x8
+            self.bus.write(self.mar.value,self.mdr.value,size)
             return 0
 
-        elif(self.currentInstruction==Instructions.lh):
-            size=self.mar.value&0x3
-            if(size==0):
-                self.mdr.value=self.bus.read(self.mar.value)
-                self.res.value=self.mdr.value&0xffff
-            elif(size==2):
-                self.mdr.value=self.bus.read(self.mar.value)
-                self.res.value=(self.mdr.value&0xffff0000)>>16
+        elif(self.currentInstruction==Instructions.sh):
+            loc=self.mar.value&0x3
+            if(loc==0):
+                size=0x3
+            elif(loc==2):
+                size=0xC
             else:
-                print("Error: Unaligned half word read")
+                print("Error : Unaligned half word write")
                 return 1
-                
-            if(self.res.value&0x8000):
-                    self.res.value|=0xffff0000
+            self.bus.write(self.mar.value,self.mdr.value,size)
+            return 0
+        
+        elif(self.currentInstruction==Instructions.sw):
+            loc=self.mar.value&0x3
+            if(loc==0):
+                size=0xF
+            else:
+                print("Error : Unaligned word write")
+                return 1
+            self.bus.write(self.mar.value,self.mdr.value,size)
+            return 0
 
-        elif(self.currentInstruction==Instructions.lhu):
-            size=self.mar.value&0x3
-            if(size==0):
-                self.mdr.value=self.bus.read(self.mar.value)
-                self.res.value=self.mdr.value&0xffff
-            elif(size==2):
-                self.mdr.value=self.bus.read(self.mar.value)
-                self.res.value=(self.mdr.value&0xffff0000)>>16
-            else:
-                print("Error: Unaligned half word read")
-                return 1
-
-        elif(self.currentInstruction==Instructions.lw):
-            size=self.mar.value&0x3
-            if(size==0):
-                self.mdr.value=self.bus.read(self.mar.value)
-                self.res.value=self.mdr.value
-            else:
-                print("Error: Unaligned word read")
-                return 1
         else:
             pass
 
@@ -127,7 +102,60 @@ class Cpu:
         if(self.rd.value==0):
             print("Error :  Write to reg X0")
             return 1
-        if(self.currentInstruction not in(Instructions.beq,Instructions.bge,Instructions.bgeu,\
+        elif(self.currentInstruction in (Instructions.lb,Instructions.lbu,Instructions.lh,Instructions.lhu,Instructions.lw)):
+            tmp=c_uint(0)
+            if(self.currentInstruction==Instructions.lb):
+                size=self.mar.value&0x3
+                if(size==0):
+                    tmp.value=self.mdr.value&0xff
+                elif(size==1):
+                    tmp.value=(self.mdr.value&0xff00)>>8
+                elif(size==2):
+                    tmp.value=(self.mdr.value&0xff0000)>>16
+                else:
+                    tmp.value=(self.mdr.value&0xff000000)>>24
+                if(tmp.value&0x80):
+                    tmp.value|=0xffffff00
+            elif(self.currentInstruction==Instructions.lbu):
+                size=self.mar.value&0x3
+                if(size==0):
+                    tmp.value=self.mdr.value&0xff
+                elif(size==1):
+                    tmp.value=(self.mdr.value&0xff00)>>8
+                elif(size==2):
+                    tmp.value=(self.mdr.value&0xff0000)>>16
+                else:
+                    tmp.value=(self.mdr.value&0xff000000)>>24
+            elif(self.currentInstruction==Instructions.lh):
+                size=self.mar.value&0x3
+                if(size==0):
+                    tmp.value=self.mdr.value&0xffff
+                elif(size==2):
+                    tmp.value=(self.mdr.value&0xffff0000)>>16
+                else:
+                    print("Error: Unaligned half word read")
+                    return 1
+                if(tmp.value&0x8000):
+                    tmp.value|=0xffff0000
+            elif(self.currentInstruction==Instructions.lhu):
+                size=self.mar.value&0x3
+                if(size==0):
+                    tmp.value=self.mdr.value&0xffff
+                elif(size==2):
+                    tmp.value=(self.mdr.value&0xffff0000)>>16
+                else:
+                    print("Error: Unaligned half word read")
+                    return 1
+            elif(self.currentInstruction==Instructions.lw):
+                size=self.mar.value&0x3
+                if(size==0):
+                    tmp.value=self.mdr.value
+                else:
+                    print("Error: Unaligned word read")
+                    return 1
+            self.cpuregs[self.rd.value]=tmp.value
+            return 0
+        elif(self.currentInstruction not in(Instructions.beq,Instructions.bge,Instructions.bgeu,\
             Instructions.blt,Instructions.bltu,Instructions.bne,Instructions.sb,Instructions.sh,Instructions.sw)):
             self.cpuregs[self.rd.value]=self.res.value
             return 0
@@ -237,14 +265,17 @@ class Cpu:
     
     def exeSB(self):
         self.mar.value=self.imm.value+self.cpuregs[self.rs1.value]
+        self.mdr.value=self.cpuregs[self.rs2.value]
         self.pc.value+=4
     
     def exeSH(self):
         self.mar.value=self.imm.value+self.cpuregs[self.rs1.value]
+        self.mdr.value=self.cpuregs[self.rs2.value]
         self.pc.value+=4
     
     def exeSW(self):
         self.mar.value=self.imm.value+self.cpuregs[self.rs1.value]
+        self.mdr.value=self.cpuregs[self.rs2.value]
         self.pc.value+=4
 
     def exeSLL(self):
