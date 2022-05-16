@@ -1,0 +1,44 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+mem              0x0000000000000000 0x0000000000005fff
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+
+.memory         0x0000000000000000      0x124
+                0x0000000000000000                . = 0x0
+ start*(.text)
+ *(.text)
+ .text          0x0000000000000000       0x8c src/start.o
+ .text          0x000000000000008c        0x0 src/main.o
+ .text          0x000000000000008c       0x5c src/ttyuart.o
+                0x000000000000008c                __tty_uart_receive_char
+                0x000000000000009c                __tty_uart_send_char
+                0x00000000000000a8                __tty_uart_send_string
+                0x00000000000000c4                __tty_uart_receive_string
+ *(*)
+ .data          0x00000000000000e8        0x0 src/start.o
+ .bss           0x00000000000000e8        0x0 src/start.o
+ .data          0x00000000000000e8        0x0 src/main.o
+ .bss           0x00000000000000e8        0x0 src/main.o
+ .text.startup  0x00000000000000e8       0x18 src/main.o
+                0x00000000000000e8                main
+ .rodata.str1.4
+                0x0000000000000100       0x10 src/main.o
+                                          0xe (size before relaxing)
+ .comment       0x0000000000000110       0x11 src/main.o
+                                         0x12 (size before relaxing)
+ .data          0x0000000000000121        0x0 src/ttyuart.o
+ .bss           0x0000000000000121        0x0 src/ttyuart.o
+ .comment       0x0000000000000121       0x12 src/ttyuart.o
+                0x0000000000000133                end = .
+                0x0000000000000134                . = ALIGN (0x4)
+ *fill*         0x0000000000000121        0x3 
+LOAD src/start.o
+LOAD src/main.o
+LOAD src/ttyuart.o
+LOAD /opt/riscv32i/lib/gcc/riscv32-unknown-elf/8.2.0/libgcc.a
+OUTPUT(firmware/firmware.elf elf32-littleriscv)
