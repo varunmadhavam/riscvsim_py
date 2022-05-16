@@ -29,11 +29,45 @@ class Cpu:
         self.bus = sysbus
         
         self.opcodeExeMAP={
-            Instructions.add:self.exeADD,
+            Instructions.lui:self.exeLUI,
+            Instructions.auipc:self.exeAUIPC,
+            Instructions.jal:self.exeJAL,
+            Instructions.jalr:self.exeJALR,
+            Instructions.beq:self.exeBEQ,
+            Instructions.bne:self.exeBNE,
+            Instructions.blt:self.exeBLT,
+            Instructions.bge:self.exeBGE,
+            Instructions.bltu:self.exeBLTU,
+            Instructions.bgeu:self.exeBGEU,
+            Instructions.lb:self.exeSKIP,
+            Instructions.lh:self.exeSKIP,
+            Instructions.lw:self.exeSKIP,
+            Instructions.lbu:self.exeSKIP,
+            Instructions.lhu:self.exeSKIP,
+            Instructions.sb:self.exeSKIP,
+            Instructions.sh:self.exeSKIP,
+            Instructions.sw:self.exeSKIP,
             Instructions.addi:self.exeADDI,
-            Instructions.zand:self.exeAND,
+            Instructions.slti:self.exeSLTI,
+            Instructions.sltiu:self.exeSLTIU,
+            Instructions.xori:self.exeXORI,
+            Instructions.ori:self.exeORI,
             Instructions.andi:self.exeANDI,
-            Instructions.lui:self.exeLUI
+            Instructions.slli:self.exeSLLI,
+            Instructions.srli:self.exeSRLI,
+            Instructions.srai:self.exeSRAI,
+            Instructions.add:self.exeADD,
+            Instructions.sub:self.exeSUB,
+            Instructions.sll:self.exeSLL,
+            Instructions.slt:self.exeSLT,
+            Instructions.slti:self.exeSLTU,
+            Instructions.xor:self.exeXOR,
+            Instructions.srl:self.exeSRL,
+            Instructions.sra:self.exeSRA,
+            Instructions.zor:self.exeOR,
+            Instructions.zand:self.exeAND,
+            Instructions.ecall:self.exeEBRK,
+            Instructions.ebreak:self.exeEBRK
         }
 
     def fetch(self):
@@ -163,6 +197,10 @@ class Cpu:
             return 0
 
     ##execution functions for each instruction
+    def exeEBRK(self):
+        print("Ebreak/ecall executed")
+        pass
+
     def exeADD(self):
         self.res=self.cpuregs[self.rs1.value]+self.cpuregs[self.rs2.value]
         self.pc.value+=4
@@ -319,10 +357,20 @@ class Cpu:
         self.pc.value+=4
     
     def exeSRL(self):
-        self.res=self.cpuregs[self.rs1.value]>>(self.cpuregs[self.rs2.value]%self.XLEN)
+        tmp=c_uint(self.cpuregs[self.rs1.value])
+        self.res=(tmp.value)>>(self.cpuregs[self.rs2.value]%self.XLEN)
         self.pc.value+=4
 
     def exeSRLI(self):
+        tmp=c_uint(self.cpuregs[self.rs1.value])
+        self.res=(tmp.value)>>self.shamt
+        self.pc.value+=4
+    
+    def exeSRA(self):
+        self.res=self.cpuregs[self.rs1.value]>>(self.cpuregs[self.rs2.value]%self.XLEN)
+        self.pc.value+=4
+
+    def exeSRAI(self):
         self.res=self.cpuregs[self.rs1.value]>>self.shamt
         self.pc.value+=4
     
@@ -337,6 +385,9 @@ class Cpu:
     def exeXORI(self):
         self.res=self.cpuregs[self.rs1.value]^self.imm.value
         self.pc.value+=4
+
+    def exeSKIP(self):
+        pass
 
      #generate the immediate value based on the instruction
     def genimmediate(self):

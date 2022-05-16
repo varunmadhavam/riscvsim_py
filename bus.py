@@ -4,8 +4,8 @@ from termuart import UART
 
 class MemoryMap(Enum):
     NOMAP=0
-    BRAM=0
-    UART=1
+    BRAM=1
+    UART=2
     def getperipheral(self,adddress):
         if adddress in range(0x00000000,0x3fffffff):
             return MemoryMap.BRAM
@@ -19,15 +19,15 @@ class Bus:
         self.uart=UART()
         self.bram=BRAM()
         self.nomap=Nomap()
-        self.peripMAP={
+        self.periphMAP={
                         MemoryMap.BRAM:self.bram,
                         MemoryMap.UART:self.uart,
                         MemoryMap.NOMAP:self.nomap
-                        }
+                       }
     def read(self,address):
-        self.peripMAP[MemoryMap.getperipheral(address)].read(address)
+        self.periphMAP[MemoryMap.getperipheral(address)].read(address)
     def write(self,address,data,size):
-        self.peripMAP[MemoryMap.getperipheral(address)].write(address,data,size)
+        self.periphMAP[MemoryMap.getperipheral(address)].write(address,data,size)
 
 class Nomap:
     def read(address):

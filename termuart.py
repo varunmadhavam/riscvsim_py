@@ -1,5 +1,7 @@
 class UART:
     def read(address):
-        return 0xdeadbeef
+        if(address&0x0000000f==0):
+            return input()
     def write(address,data,size):
-        pass
+        if(address&0x0000000f==1):
+            print(data,end="")
