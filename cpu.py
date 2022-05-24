@@ -1,9 +1,12 @@
+from multiprocessing.connection import wait
+from time import sleep
 from bus import Bus
 from ctypes import *
 from isa import Isa,Instructions
 
 class Cpu:
-    def __init__(self,reset,sysbus:Bus):
+    def __init__(self,reset,sysbus:Bus,debug=0):
+        self.debug=debug
         #cpu gp registers
         self.cpuregs=[0]*32
         self.XLEN=32
@@ -70,18 +73,22 @@ class Cpu:
             Instructions.ebreak:self.exeEBRK
         }
 
-    def cpu_cyc(self):
+    def cpu_cyc(self,delay):
         while True:
             self.fetch()
             self.decode()
             self.execute()
             self.memaccess()
             self.writeback()
+            sleep(delay)
             
     def fetch(self):
         self.mar.value=self.pc.value
         self.mdr.value=self.bus.read(self.mar.value)
         self.ir.value=self.mdr.value
+        if self.debug:
+            print("pc : "+hex(self.pc.value))
+            print("fetched : "+hex(self.ir.value))
 
     def decode(self):
         self.opcode.value=self.ir.value&0x0000007f
@@ -93,6 +100,8 @@ class Cpu:
         self.shamt.value=self.rs2.value
         self.currentInstruction=self.isa.getInstruction(self.opcode,self.func3,self.func7)
         self.genimmediate()
+        if self.debug:
+            print("opcode={} | rd={} | rs1={} | rs2={} | func3={} | func7={} | shmat={} | imm={} | Inst={}".format(hex(self.opcode.value),self.rd.value,self.rs1.value,self.rs2.value,self.func3.value,self.func7.value,self.shamt.value,self.imm.value,self.currentInstruction))
         
     def execute(self):
         self.opcodeExeMAP[self.currentInstruction]()
@@ -100,6 +109,7 @@ class Cpu:
     def memaccess(self):
         if(self.currentInstruction in (Instructions.lb,Instructions.lbu,Instructions.lh,Instructions.lhu,Instructions.lw)):
             self.mdr.value=self.bus.read(self.mar.value)
+            self.pc.value+=4
             return 0
 
         elif(self.currentInstruction==Instructions.sb):
@@ -113,6 +123,7 @@ class Cpu:
             else:
                 size=0x8
             self.bus.write(self.mar.value,self.mdr.value,size)
+            self.pc.value+=4
             return 0
 
         elif(self.currentInstruction==Instructions.sh):
@@ -125,6 +136,7 @@ class Cpu:
                 print("Error : Unaligned half word write")
                 return 1
             self.bus.write(self.mar.value,self.mdr.value,size)
+            self.pc.value+=4
             return 0
         
         elif(self.currentInstruction==Instructions.sw):
@@ -135,6 +147,7 @@ class Cpu:
                 print("Error : Unaligned word write")
                 return 1
             self.bus.write(self.mar.value,self.mdr.value,size)
+            self.pc.value+=4
             return 0
 
         else:
@@ -142,8 +155,8 @@ class Cpu:
 
     def writeback(self):
         if(self.rd.value==0):
-            print("Error :  Write to reg X0")
-            return 1
+            print("Info :  Write to reg X0")
+            return 0
         elif(self.currentInstruction in (Instructions.lb,Instructions.lbu,Instructions.lh,Instructions.lhu,Instructions.lw)):
             tmp=c_uint(0)
             if(self.currentInstruction==Instructions.lb):
@@ -210,23 +223,23 @@ class Cpu:
         pass
 
     def exeADD(self):
-        self.res=self.cpuregs[self.rs1.value]+self.cpuregs[self.rs2.value]
+        self.res.value=self.cpuregs[self.rs1.value]+self.cpuregs[self.rs2.value]
         self.pc.value+=4
 
     def exeADDI(self):
-        self.res=self.cpuregs[self.rs1.value]+self.imm.value
+        self.res.value=self.cpuregs[self.rs1.value]+self.imm.value
         self.pc.value+=4
 
     def exeAND(self):
-        self.res=self.cpuregs[self.rs1.value]&self.cpuregs[self.rs2.value]
+        self.res.value=self.cpuregs[self.rs1.value]&self.cpuregs[self.rs2.value]
         self.pc.value+=4
 
     def exeANDI(self):
-        self.res=self.cpuregs[self.rs1.value]&self.imm.value
+        self.res.value=self.cpuregs[self.rs1.value]&self.imm.value
         self.pc.value+=4
 
     def exeAUIPC(self):
-        self.res=self.pc.value+self.imm.value
+        self.res.value=self.pc.value+self.imm.value
         self.pc.value+=4
 
     def exeBEQ(self):
@@ -270,11 +283,11 @@ class Cpu:
             self.pc.value+=4
 
     def exeJAL(self):
-        self.res=self.pc.value+4
+        self.res.value=self.pc.value+4
         self.pc.value+=self.imm.value
 
     def exeJALR(self):
-        self.res=self.pc.value+4
+        self.res.value=self.pc.value+4
         self.pc.value=(self.imm.value+self.cpuregs[self.rs1.value])&0xfffffffe
 
     def exeLB(self):
@@ -294,7 +307,7 @@ class Cpu:
         self.pc.value+=4
 
     def exeLUI(self):
-        self.res=self.imm.value
+        self.res.value=self.imm.value
         self.pc.value+=4
 
     def exeLW(self):
@@ -302,11 +315,11 @@ class Cpu:
         self.pc.value+=4
     
     def exeOR(self):
-        self.res=self.cpuregs[self.rs1.value]|self.cpuregs[self.rs2.value]
+        self.res.value=self.cpuregs[self.rs1.value]|self.cpuregs[self.rs2.value]
         self.pc.value+=4
 
     def exeORI(self):
-        self.res=self.cpuregs[self.rs1.value]|self.imm.value
+        self.res.value=self.cpuregs[self.rs1.value]|self.imm.value
         self.pc.value+=4
     
     def exeSB(self):
@@ -325,73 +338,73 @@ class Cpu:
         self.pc.value+=4
 
     def exeSLL(self):
-        self.res=self.cpuregs[self.rs1.value]<<(self.cpuregs[self.rs2.value]%self.XLEN)
+        self.res.value=self.cpuregs[self.rs1.value]<<(self.cpuregs[self.rs2.value]%self.XLEN)
         self.pc.value+=4
 
     def exeSLLI(self):
-        self.res=self.cpuregs[self.rs1.value]<<self.shamt
+        self.res.value=self.cpuregs[self.rs1.value]<<self.shamt
         self.pc.value+=4
 
     def exeSLT(self):
         if(self.cpuregs[self.rs1.value]<self.cpuregs[self.rs2.value]):
-            self.res=1
+            self.res.value=1
         else:
-            self.res=0
+            self.res.value=0
         self.pc.value+=4
 
     def exeSLTI(self):
         if(self.cpuregs[self.rs1.value]<self.imm.value):
-            self.res=1
+            self.res.value=1
         else:
-            self.res=0
+            self.res.value=0
         self.pc.value+=4
     
     def exeSLTIU(self):
         tmp1=c_uint(self.cpuregs[self.rs1.value])
         tmp2=c_uint(self.cpuregs[self.rs2.value])
         if(tmp1.value<tmp2.value):
-            self.res=1
+            self.res.value=1
         else:
-            self.res=0
+            self.res.value=0
         self.pc.value+=4
     
     def exeSLTU(self):
         tmp1=c_uint(self.cpuregs[self.rs1.value])
         tmp2=c_uint(self.imm.value)
         if(tmp1.value<tmp2.value):
-            self.res=1
+            self.res.value=1
         else:
-            self.res=0
+            self.res.value=0
         self.pc.value+=4
     
     def exeSRL(self):
         tmp=c_uint(self.cpuregs[self.rs1.value])
-        self.res=(tmp.value)>>(self.cpuregs[self.rs2.value]%self.XLEN)
+        self.res.value=(tmp.value)>>(self.cpuregs[self.rs2.value]%self.XLEN)
         self.pc.value+=4
 
     def exeSRLI(self):
         tmp=c_uint(self.cpuregs[self.rs1.value])
-        self.res=(tmp.value)>>self.shamt
+        self.res.value=(tmp.value)>>self.shamt
         self.pc.value+=4
     
     def exeSRA(self):
-        self.res=self.cpuregs[self.rs1.value]>>(self.cpuregs[self.rs2.value]%self.XLEN)
+        self.res.value=self.cpuregs[self.rs1.value]>>(self.cpuregs[self.rs2.value]%self.XLEN)
         self.pc.value+=4
 
     def exeSRAI(self):
-        self.res=self.cpuregs[self.rs1.value]>>self.shamt
+        self.res.value=self.cpuregs[self.rs1.value]>>self.shamt
         self.pc.value+=4
     
     def exeSUB(self):
-        self.res=self.cpuregs[self.rs1.value]-self.cpuregs[self.rs2.value]
+        self.res.value=self.cpuregs[self.rs1.value]-self.cpuregs[self.rs2.value]
         self.pc.value+=4
     
     def exeXOR(self):
-        self.res=self.cpuregs[self.rs1.value]^self.cpuregs[self.rs2.value]
+        self.res.value=self.cpuregs[self.rs1.value]^self.cpuregs[self.rs2.value]
         self.pc.value+=4
 
     def exeXORI(self):
-        self.res=self.cpuregs[self.rs1.value]^self.imm.value
+        self.res.value=self.cpuregs[self.rs1.value]^self.imm.value
         self.pc.value+=4
 
     def exeSKIP(self):

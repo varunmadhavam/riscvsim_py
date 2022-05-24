@@ -32,4 +32,7 @@ src/%.o: src/%.c
 clean:
 	rm -vrf $(FIRMWARE_OBJS) firmware/firmware.elf firmware/firmware.bin firmware/firmware.hex firmware/firmware.map firmware/firmware.coe firmware/firmware.srec
 
+disass: firmware/firmware.elf
+	/opt/riscv32i/bin/riscv32-unknown-elf-objdump -d -M no-aliases -M numeric firmware/firmware.elf
+	
 .PHONY: clean
