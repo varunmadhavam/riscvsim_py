@@ -1,8 +1,9 @@
 from ctypes import *
 class BRAM:
-    def __init__(self,memsize=4096):
+    def __init__(self,memsize=4096,binfile=""):
         self.RAM=[0]*memsize
         self.mem_size=memsize
+        self.init_mem(binfile)
 
     def read(self,address):
         addr=address>>2

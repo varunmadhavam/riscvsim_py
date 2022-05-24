@@ -1,10 +1,9 @@
 from memory import BRAM
+from cpu import Cpu
+from bus import Bus
+from termuart import UART
 
-bram=BRAM()
-bram.init_mem("./sw/firmware/firmware.bin")
-print(hex(bram.RAM[0x0>>2]))
-print(hex(bram.RAM[0]))
-print(hex(bram.RAM[0x4>>2]))
-print(hex(bram.RAM[1]))
-print(hex(bram.RAM[0x9C>>2]))
-print(hex(bram.RAM[1]))
+class soc():
+    def __init__(self):
+        self.ram=BRAM(4096,"../sw/firmware/firmware.bin")
+        self.bus=Bus()

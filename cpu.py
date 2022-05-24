@@ -70,6 +70,14 @@ class Cpu:
             Instructions.ebreak:self.exeEBRK
         }
 
+    def cpu_cyc(self):
+        while True:
+            self.fetch()
+            self.decode()
+            self.execute()
+            self.memaccess()
+            self.writeback()
+            
     def fetch(self):
         self.mar.value=self.pc.value
         self.mdr.value=self.bus.read(self.mar.value)
@@ -416,7 +424,7 @@ class Cpu:
         else:
             pass
         
-def Tests():
+def test_cpu():
     bus=Bus()
     cpu = Cpu(0,bus)
     cpu.ir.value=0x00177713
@@ -427,4 +435,4 @@ def Tests():
     cpu.execute()
 
 if __name__ == "__main__":
-    Tests()
+    test_cpu()
