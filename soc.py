@@ -16,7 +16,7 @@ class Soc():
         self.cpu=Cpu(0x00000000,self.bus,1)
     
     def run(self):
-        self.cpu.cpu_cyc(0)
+        self.cpu.cpu_cyc(2)
     
 soc=Soc()
 soc.run()

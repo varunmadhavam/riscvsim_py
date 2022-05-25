@@ -1,19 +1,22 @@
-// This is free and unencumbered software released into the public domain.
-//
-// Anyone is free to copy, modify, publish, use, compile, sell, or
-// distribute this software, either in source code form or as a compiled
-// binary, for any purpose, commercial or non-commercial, and by any
-// means.
-
 
 #include "custom_ops.S"
 
 	.section .text
+	.global irq
+	.global hello
+	.global sieve
+	.global multest
+	.global hard_mul
+	.global hard_mulh
+	.global hard_mulhsu
+	.global hard_mulhu
+	.global hard_div
+	.global hard_divu
+	.global hard_rem
+	.global hard_remu
+	.global stats
 
 reset_vec:
-	// no more than 16 bytes here !
-	picorv32_waitirq_insn(zero)
-	picorv32_maskirq_insn(zero, zero)
 	j start
 
 
@@ -55,16 +58,19 @@ start:
 	addi x30, zero, 0
 	addi x31, zero, 0
 
+	lui sp,(128*1024)>>12
+	jal ra,hello
 
 	/* running tests from riscv-tests */
-#  define TEST(n) \
+
+
+	#define TEST(n) \
 	.global n; \
 	addi x1, zero, 1000; \
 	picorv32_timer_insn(zero, x1); \
 	jal zero,n; \
 	.global n ## _ret; \
 	n ## _ret:
-
 
 	TEST(lui)
 	TEST(auipc)
@@ -120,29 +126,6 @@ start:
 
 	TEST(simple)
 
-	/* set stack pointer */
-	lui sp,(128*1024)>>12
-
-	/* set gp and tp */
-	lui gp, %hi(0xdeadbeef)
-	addi gp, gp, %lo(0xdeadbeef)
-	addi tp, gp, 0
-
-#ifdef ENABLE_SIEVE
-	/* call sieve C code */
-	jal ra,sieve
-#endif
-
-#ifdef ENABLE_MULTST
-	/* call multest C code */
-	jal ra,multest
-#endif
-
-#ifdef ENABLE_STATS
-	/* call stats C code */
-	jal ra,stats
-#endif
-
 	/* print "DONE\n" */
 	lui a0,0x10000000>>12
 	addi a1,zero,'D'
@@ -163,38 +146,3 @@ start:
 	/* trap */
 	ebreak
 
-
-/* Hard mul functions for multest.c
- **********************************/
-
-hard_mul:
-	mul a0, a0, a1
-	ret
-
-hard_mulh:
-	mulh a0, a0, a1
-	ret
-
-hard_mulhsu:
-	mulhsu a0, a0, a1
-	ret
-
-hard_mulhu:
-	mulhu a0, a0, a1
-	ret
-
-hard_div:
-	div a0, a0, a1
-	ret
-
-hard_divu:
-	divu a0, a0, a1
-	ret
-
-hard_rem:
-	rem a0, a0, a1
-	ret
-
-hard_remu:
-	remu a0, a0, a1
-	ret
