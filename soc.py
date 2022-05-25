@@ -7,7 +7,7 @@ from map import MemoryMap
 
 class Soc():
     def __init__(self):
-        self.ram=BRAM(4096,"./sw/firmware/firmware.bin")
+        self.ram=BRAM(16384,"./sw/firmware/firmware.bin")
         self.uart=UART()
         self.map=MemoryMap()
         self.map.addperipheral(0x00000000,0x0000ffff,self.ram)

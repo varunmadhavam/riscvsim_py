@@ -1,0 +1,298 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+mem              0x0000000000000000 0x0000000000018000
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+
+.memory         0x0000000000000000     0x9d88
+                0x0000000000000000                . = 0x0
+ start*(.text)
+ *(.text)
+ .text          0x0000000000000000      0x544 src/or.o
+                0x0000000000000000                or
+ .text          0x0000000000000544      0x540 src/xor.o
+                0x0000000000000544                xor
+ .text          0x0000000000000a84      0x334 src/start.o
+                0x0000000000000b18                lui_ret
+                0x0000000000000b24                auipc_ret
+                0x0000000000000b30                j_ret
+                0x0000000000000b3c                jal_ret
+                0x0000000000000b48                jalr_ret
+                0x0000000000000b54                beq_ret
+                0x0000000000000b60                bne_ret
+                0x0000000000000b6c                blt_ret
+                0x0000000000000b78                bge_ret
+                0x0000000000000b84                bltu_ret
+                0x0000000000000b90                bgeu_ret
+                0x0000000000000b9c                lb_ret
+                0x0000000000000ba8                lh_ret
+                0x0000000000000bb4                lw_ret
+                0x0000000000000bc0                lbu_ret
+                0x0000000000000bcc                lhu_ret
+                0x0000000000000bd8                sb_ret
+                0x0000000000000be4                sh_ret
+                0x0000000000000bf0                sw_ret
+                0x0000000000000bfc                addi_ret
+                0x0000000000000c08                slti_ret
+                0x0000000000000c14                xori_ret
+                0x0000000000000c20                ori_ret
+                0x0000000000000c2c                andi_ret
+                0x0000000000000c38                slli_ret
+                0x0000000000000c44                srli_ret
+                0x0000000000000c50                srai_ret
+                0x0000000000000c5c                add_ret
+                0x0000000000000c68                sub_ret
+                0x0000000000000c74                sll_ret
+                0x0000000000000c80                slt_ret
+                0x0000000000000c8c                xor_ret
+                0x0000000000000c98                srl_ret
+                0x0000000000000ca4                sra_ret
+                0x0000000000000cb0                or_ret
+                0x0000000000000cbc                and_ret
+                0x0000000000000cc8                mulh_ret
+                0x0000000000000cd4                mulhsu_ret
+                0x0000000000000ce0                mulhu_ret
+                0x0000000000000cec                mul_ret
+                0x0000000000000cf8                div_ret
+                0x0000000000000d04                divu_ret
+                0x0000000000000d10                rem_ret
+                0x0000000000000d1c                remu_ret
+                0x0000000000000d28                simple_ret
+ .text          0x0000000000000db8      0x4f8 src/sh.o
+                0x0000000000000db8                sh
+ .text          0x00000000000012b0      0x244 src/andi.o
+                0x00000000000012b0                andi
+ .text          0x00000000000014f4      0x540 src/sub.o
+                0x00000000000014f4                sub
+ .text          0x0000000000001a34      0x5ec src/sll.o
+                0x0000000000001a34                sll
+ .text          0x0000000000002020      0x61c src/sra.o
+                0x0000000000002020                sra
+ .text          0x000000000000263c      0x2ec src/lh.o
+                0x000000000000263c                lh
+ .text          0x0000000000002928        0x0 src/custom_ops.o
+ .text          0x0000000000002928      0x33c src/srai.o
+                0x0000000000002928                srai
+ .text          0x0000000000002c64      0x15c src/rem.o
+                0x0000000000002c64                rem
+ .text          0x0000000000002dc0      0x54c src/mulh.o
+                0x0000000000002dc0                mulh
+ .text          0x000000000000330c      0x2cc src/lb.o
+                0x000000000000330c                lb
+ .text          0x00000000000035d8      0x3d8 src/bgeu.o
+                0x00000000000035d8                bgeu
+ .text          0x00000000000039b0      0x504 src/sw.o
+                0x00000000000039b0                sw
+ .text          0x0000000000003eb4      0x15c src/div.o
+                0x0000000000003eb4                div
+ .text          0x0000000000004010      0x340 src/beq.o
+                0x0000000000004010                beq
+ .text          0x0000000000004350       0xcc src/auipc.o
+                0x0000000000004350                auipc
+ .text          0x000000000000441c      0x30c src/addi.o
+                0x000000000000441c                addi
+ .text          0x0000000000004728      0x184 src/jalr.o
+                0x0000000000004728                jalr
+ .text          0x00000000000048ac      0x30c src/lw.o
+                0x00000000000048ac                lw
+ .text          0x0000000000004bb8      0x25c src/ori.o
+                0x0000000000004bb8                ori
+ .text          0x0000000000004e14       0xbc src/j.o
+                0x0000000000004e14                j
+ .text          0x0000000000004ed0      0x54c src/mulhu.o
+                0x0000000000004ed0                mulhu
+ .text          0x000000000000541c      0x63c src/srl.o
+                0x000000000000541c                srl
+ .text          0x0000000000005a58      0x548 src/slt.o
+                0x0000000000005a58                slt
+ .text          0x0000000000005fa0      0x2cc src/lbu.o
+                0x0000000000005fa0                lbu
+ .text          0x000000000000626c      0x300 src/lhu.o
+                0x000000000000626c                lhu
+ .text          0x000000000000656c       0x54 src/simple.o
+                0x000000000000656c                simple
+ .text          0x00000000000065c0      0x378 src/bltu.o
+                0x00000000000065c0                bltu
+ .text          0x0000000000006938      0x160 src/remu.o
+                0x0000000000006938                remu
+ .text          0x0000000000006a98      0x340 src/blt.o
+                0x0000000000006a98                blt
+ .text          0x0000000000006dd8      0x308 src/slli.o
+                0x0000000000006dd8                slli
+ .text          0x00000000000070e0      0x3a0 src/bge.o
+                0x00000000000070e0                bge
+ .text          0x0000000000007480      0x268 src/xori.o
+                0x0000000000007480                xori
+ .text          0x00000000000076e8      0x474 src/sb.o
+                0x00000000000076e8                sb
+ .text          0x0000000000007b5c       0xe0 src/lui.o
+                0x0000000000007b5c                lui
+ .text          0x0000000000007c3c       0xd8 src/jal.o
+                0x0000000000007c3c                jal
+ .text          0x0000000000007d14      0x548 src/mul.o
+                0x0000000000007d14                mul
+ .text          0x000000000000825c      0x560 src/add.o
+                0x000000000000825c                add
+ .text          0x00000000000087bc      0x338 src/srli.o
+                0x00000000000087bc                srli
+ .text          0x0000000000008af4      0x164 src/divu.o
+                0x0000000000008af4                divu
+ .text          0x0000000000008c58      0x344 src/bne.o
+                0x0000000000008c58                bne
+ .text          0x0000000000008f9c      0x538 src/and.o
+                0x0000000000008f9c                and
+ .text          0x00000000000094d4      0x2f8 src/slti.o
+                0x00000000000094d4                slti
+ .text          0x00000000000097cc      0x54c src/mulhsu.o
+                0x00000000000097cc                mulhsu
+ *(*)
+ .data          0x0000000000009d18        0x0 src/or.o
+ .bss           0x0000000000009d18        0x0 src/or.o
+ .data          0x0000000000009d18        0x0 src/xor.o
+ .bss           0x0000000000009d18        0x0 src/xor.o
+ .data          0x0000000000009d18        0x0 src/start.o
+ .bss           0x0000000000009d18        0x0 src/start.o
+ .data          0x0000000000009d18       0x14 src/sh.o
+ .bss           0x0000000000009d2c        0x0 src/sh.o
+ .data          0x0000000000009d2c        0x0 src/andi.o
+ .bss           0x0000000000009d2c        0x0 src/andi.o
+ .data          0x0000000000009d2c        0x0 src/sub.o
+ .bss           0x0000000000009d2c        0x0 src/sub.o
+ .data          0x0000000000009d2c        0x0 src/sll.o
+ .bss           0x0000000000009d2c        0x0 src/sll.o
+ .data          0x0000000000009d2c        0x0 src/sra.o
+ .bss           0x0000000000009d2c        0x0 src/sra.o
+ .data          0x0000000000009d2c        0x8 src/lh.o
+ .bss           0x0000000000009d34        0x0 src/lh.o
+ .data          0x0000000000009d34        0x0 src/custom_ops.o
+ .bss           0x0000000000009d34        0x0 src/custom_ops.o
+ .data          0x0000000000009d34        0x0 src/srai.o
+ .bss           0x0000000000009d34        0x0 src/srai.o
+ .data          0x0000000000009d34        0x0 src/rem.o
+ .bss           0x0000000000009d34        0x0 src/rem.o
+ .data          0x0000000000009d34        0x0 src/mulh.o
+ .bss           0x0000000000009d34        0x0 src/mulh.o
+ .data          0x0000000000009d34        0x4 src/lb.o
+ .bss           0x0000000000009d38        0x0 src/lb.o
+ .data          0x0000000000009d38        0x0 src/bgeu.o
+ .bss           0x0000000000009d38        0x0 src/bgeu.o
+ .data          0x0000000000009d38       0x28 src/sw.o
+ .bss           0x0000000000009d60        0x0 src/sw.o
+ .data          0x0000000000009d60        0x0 src/div.o
+ .bss           0x0000000000009d60        0x0 src/div.o
+ .data          0x0000000000009d60        0x0 src/beq.o
+ .bss           0x0000000000009d60        0x0 src/beq.o
+ .data          0x0000000000009d60        0x0 src/auipc.o
+ .bss           0x0000000000009d60        0x0 src/auipc.o
+ .data          0x0000000000009d60        0x0 src/addi.o
+ .bss           0x0000000000009d60        0x0 src/addi.o
+ .data          0x0000000000009d60        0x0 src/jalr.o
+ .bss           0x0000000000009d60        0x0 src/jalr.o
+ .data          0x0000000000009d60       0x10 src/lw.o
+ .bss           0x0000000000009d70        0x0 src/lw.o
+ .data          0x0000000000009d70        0x0 src/ori.o
+ .bss           0x0000000000009d70        0x0 src/ori.o
+ .data          0x0000000000009d70        0x0 src/j.o
+ .bss           0x0000000000009d70        0x0 src/j.o
+ .data          0x0000000000009d70        0x0 src/mulhu.o
+ .bss           0x0000000000009d70        0x0 src/mulhu.o
+ .data          0x0000000000009d70        0x0 src/srl.o
+ .bss           0x0000000000009d70        0x0 src/srl.o
+ .data          0x0000000000009d70        0x0 src/slt.o
+ .bss           0x0000000000009d70        0x0 src/slt.o
+ .data          0x0000000000009d70        0x4 src/lbu.o
+ .bss           0x0000000000009d74        0x0 src/lbu.o
+ .data          0x0000000000009d74        0x8 src/lhu.o
+ .bss           0x0000000000009d7c        0x0 src/lhu.o
+ .data          0x0000000000009d7c        0x0 src/simple.o
+ .bss           0x0000000000009d7c        0x0 src/simple.o
+ .data          0x0000000000009d7c        0x0 src/bltu.o
+ .bss           0x0000000000009d7c        0x0 src/bltu.o
+ .data          0x0000000000009d7c        0x0 src/remu.o
+ .bss           0x0000000000009d7c        0x0 src/remu.o
+ .data          0x0000000000009d7c        0x0 src/blt.o
+ .bss           0x0000000000009d7c        0x0 src/blt.o
+ .data          0x0000000000009d7c        0x0 src/slli.o
+ .bss           0x0000000000009d7c        0x0 src/slli.o
+ .data          0x0000000000009d7c        0x0 src/bge.o
+ .bss           0x0000000000009d7c        0x0 src/bge.o
+ .data          0x0000000000009d7c        0x0 src/xori.o
+ .bss           0x0000000000009d7c        0x0 src/xori.o
+ .data          0x0000000000009d7c        0xa src/sb.o
+ .bss           0x0000000000009d86        0x0 src/sb.o
+ *fill*         0x0000000000009d86        0x2 
+ .data          0x0000000000009d88        0x0 src/lui.o
+ .bss           0x0000000000009d88        0x0 src/lui.o
+ .data          0x0000000000009d88        0x0 src/jal.o
+ .bss           0x0000000000009d88        0x0 src/jal.o
+ .data          0x0000000000009d88        0x0 src/mul.o
+ .bss           0x0000000000009d88        0x0 src/mul.o
+ .data          0x0000000000009d88        0x0 src/add.o
+ .bss           0x0000000000009d88        0x0 src/add.o
+ .data          0x0000000000009d88        0x0 src/srli.o
+ .bss           0x0000000000009d88        0x0 src/srli.o
+ .data          0x0000000000009d88        0x0 src/divu.o
+ .bss           0x0000000000009d88        0x0 src/divu.o
+ .data          0x0000000000009d88        0x0 src/bne.o
+ .bss           0x0000000000009d88        0x0 src/bne.o
+ .data          0x0000000000009d88        0x0 src/and.o
+ .bss           0x0000000000009d88        0x0 src/and.o
+ .data          0x0000000000009d88        0x0 src/slti.o
+ .bss           0x0000000000009d88        0x0 src/slti.o
+ .data          0x0000000000009d88        0x0 src/mulhsu.o
+ .bss           0x0000000000009d88        0x0 src/mulhsu.o
+                0x0000000000009d88                end = .
+                0x0000000000009d88                . = ALIGN (0x4)
+LOAD src/or.o
+LOAD src/xor.o
+LOAD src/start.o
+LOAD src/sh.o
+LOAD src/andi.o
+LOAD src/sub.o
+LOAD src/sll.o
+LOAD src/sra.o
+LOAD src/lh.o
+LOAD src/custom_ops.o
+LOAD src/srai.o
+LOAD src/rem.o
+LOAD src/mulh.o
+LOAD src/lb.o
+LOAD src/bgeu.o
+LOAD src/sw.o
+LOAD src/div.o
+LOAD src/beq.o
+LOAD src/auipc.o
+LOAD src/addi.o
+LOAD src/jalr.o
+LOAD src/lw.o
+LOAD src/ori.o
+LOAD src/j.o
+LOAD src/mulhu.o
+LOAD src/srl.o
+LOAD src/slt.o
+LOAD src/lbu.o
+LOAD src/lhu.o
+LOAD src/simple.o
+LOAD src/bltu.o
+LOAD src/remu.o
+LOAD src/blt.o
+LOAD src/slli.o
+LOAD src/bge.o
+LOAD src/xori.o
+LOAD src/sb.o
+LOAD src/lui.o
+LOAD src/jal.o
+LOAD src/mul.o
+LOAD src/add.o
+LOAD src/srli.o
+LOAD src/divu.o
+LOAD src/bne.o
+LOAD src/and.o
+LOAD src/slti.o
+LOAD src/mulhsu.o
+LOAD /opt/riscv32im/lib/gcc/riscv32-unknown-elf/8.2.0/libgcc.a
+OUTPUT(firmware/firmware.elf elf32-littleriscv)
