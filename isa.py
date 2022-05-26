@@ -1,5 +1,6 @@
 from enum import Enum
 from ctypes import *
+import logging
 class Instructions(Enum):
     lui=0
     auipc=1
@@ -140,13 +141,13 @@ class Isa():
                 if type(inst) is Instructions:
                     return inst
                 else:
-                    print("Error: Unimplemented Instructions encountered\n")
+                    logging.critical("ISA: Unimplemented Instructions encountered\n")
                     return Instructions.noimp
             else:
-                print("Error: Unimplemented Instructions encountered\n")
+                logging.critical("ISA: Unimplemented Instructions encountered\n")
                 return Instructions.noimp
         else:
-            print("Error: Unimplemented Instructions encountered\n")
+            logging.critical("ISA: Unimplemented Instructions encountered\n")
             return Instructions.noimp
 
 

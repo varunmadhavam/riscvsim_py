@@ -90,9 +90,9 @@ start:
 	TEST(lbu)
 	TEST(lhu)
 
-	TEST(sb)
-	TEST(sh)
-	TEST(sw)
+	//TEST(sb)
+	//TEST(sh)
+	//TEST(sw)
 
 	TEST(addi)
 	TEST(slti) // also tests sltiu
@@ -112,16 +112,6 @@ start:
 	TEST(sra)
 	TEST(or)
 	TEST(and)
-
-	TEST(mulh)
-	TEST(mulhsu)
-	TEST(mulhu)
-	TEST(mul)
-
-	TEST(div)
-	TEST(divu)
-	TEST(rem)
-	TEST(remu)
 
 	TEST(simple)
 
@@ -144,4 +134,3 @@ start:
 
 	/* trap */
 	ebreak
-

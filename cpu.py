@@ -5,11 +5,12 @@ from bus import Bus
 from ctypes import *
 from isa import Isa,Instructions
 import logging
+import array
 
 class Cpu:
     def __init__(self,reset,sysbus:Bus):
         #cpu gp registers
-        self.cpuregs=[0]*32
+        self.cpuregs=array.array('i',(0 for i in range(0,32)))
         self.XLEN=32
 
         #cpu other registers
@@ -26,7 +27,7 @@ class Cpu:
         self.func3=c_ubyte(0)
         self.func7=c_ubyte(0)
         self.shamt=c_ubyte(0)
-        self.res=c_uint(0)
+        self.res=c_int(0)
         self.currentInstruction=Instructions.noimp
 
         self.isa=Isa()
@@ -74,6 +75,11 @@ class Cpu:
             Instructions.ebreak:self.exeEBRK
         }
 
+    def dump_regs(self):
+        for x in self.cpuregs:
+            print(hex(x),"   ",end="")
+        print("")
+
     def cpu_cyc(self,delay):
         while True:
             self.fetch()
@@ -83,6 +89,7 @@ class Cpu:
             self.writeback()
             sleep(delay)
             if logging.root.level == logging.DEBUG :
+                self.dump_regs()
                 print("")
             
     def fetch(self):
@@ -133,7 +140,7 @@ class Cpu:
             elif(loc==2):
                 size=0xC
             else:
-                print("Error : Unaligned half word write")
+                logging.critical("MEMACCESS : Unaligned half word write")
                 return 1
             self.bus.write(self.mar.value,self.mdr.value,size)
             return 0
@@ -143,7 +150,7 @@ class Cpu:
             if(loc==0):
                 size=0xF
             else:
-                print("Error : Unaligned word write")
+                logging.critical("MEMACCESS : Unaligned word write")
                 return 1
             self.bus.write(self.mar.value,self.mdr.value,size)
             return 0
@@ -153,7 +160,7 @@ class Cpu:
 
     def writeback(self):
         if(self.currentInstruction in (Instructions.lb,Instructions.lbu,Instructions.lh,Instructions.lhu,Instructions.lw)):
-            tmp=c_uint(0)
+            tmp=c_int(0)
             if(self.currentInstruction==Instructions.lb):
                 size=self.mar.value&0x3
                 if(size==0):
@@ -183,7 +190,7 @@ class Cpu:
                 elif(size==2):
                     tmp.value=(self.mdr.value&0xffff0000)>>16
                 else:
-                    print("Error: Unaligned half word read")
+                    logging.critical("MEMACCESS Unaligned half word read")
                     return 1
                 if(tmp.value&0x8000):
                     tmp.value|=0xffff0000
@@ -194,14 +201,14 @@ class Cpu:
                 elif(size==2):
                     tmp.value=(self.mdr.value&0xffff0000)>>16
                 else:
-                    print("Error: Unaligned half word read")
+                    logging.critical("MEMACCESS Unaligned half word read")
                     return 1
             elif(self.currentInstruction==Instructions.lw):
                 size=self.mar.value&0x3
                 if(size==0):
                     tmp.value=self.mdr.value
                 else:
-                    print("Error: Unaligned word read")
+                    logging.critical("MEMACCESS Unaligned word read")
                     return 1
             self.cpuregs[self.rd.value]=tmp.value
             return 0
@@ -218,9 +225,9 @@ class Cpu:
 
     ##execution functions for each instruction
     def exeEBRK(self):
-        print("Ebreak/ecall executed")
+        logging.info("Ebreak/ecall executed")
         sys.exit(0)
-        
+
     def exeADD(self):
         self.res.value=self.cpuregs[self.rs1.value]+self.cpuregs[self.rs2.value]
         self.pc.value+=4
