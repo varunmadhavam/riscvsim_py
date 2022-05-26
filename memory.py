@@ -1,4 +1,6 @@
 from ctypes import *
+import logging
+import sys
 class BRAM:
     def __init__(self,memsize=4096,binfile=""):
         self.RAM=[0]*memsize
@@ -7,15 +9,16 @@ class BRAM:
 
     def read(self,address):
         addr=address>>2
-        if(addr<self.mem_size):
+        if(addr<self.mem_size*4):
             return self.RAM[addr]
         else:
-            print("Error : memory address out of range @ read")
+            logging.critical("BRAM : Bus address out of range @ read : "+str(hex(address)) +" "+ str(self.mem_size*4))
+            sys.exit(1)
 
     def init_mem(self,binfile):
         file=open(binfile,"rb")
         addr=0
-        while word:=file.read(4):
+        while word:=file.read(4): 
             val=0
             val|=word[0]
             val|=word[1]<<8
@@ -26,7 +29,7 @@ class BRAM:
 
     def write(self,address,data,size):
         addr=address>>2
-        if(addr<self.mem_size):
+        if(addr<self.mem_size*4):
             orig=self.RAM[addr]
             if(size&1):
                 orig&=~(0x000000ff)
@@ -42,7 +45,8 @@ class BRAM:
                 orig|=data&0xff000000
             self.RAM[addr]=orig
         else:
-            print("Error : memory address out of range @ write")
+            logging.critical("BRAM : Bus address out of range @ write : "+str(hex(address))+" "+ str(self.mem_size*4))
+            sys.exit(1)
 
 #to run unit tests do pytest ./memory.py
 def test_bram():
@@ -83,7 +87,7 @@ def test_bram():
             assert val==0xffaaffff
         else:
             assert val==0xaaffffff
-            
+
     #half word read writes
     for i in range(0,100):
         addr=random.randrange(0,4096)

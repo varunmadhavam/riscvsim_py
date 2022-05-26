@@ -1,12 +1,13 @@
 from multiprocessing.connection import wait
+import sys
 from time import sleep
 from bus import Bus
 from ctypes import *
 from isa import Isa,Instructions
+import logging
 
 class Cpu:
-    def __init__(self,reset,sysbus:Bus,debug=0):
-        self.debug=debug
+    def __init__(self,reset,sysbus:Bus):
         #cpu gp registers
         self.cpuregs=[0]*32
         self.XLEN=32
@@ -42,14 +43,14 @@ class Cpu:
             Instructions.bge:self.exeBGE,
             Instructions.bltu:self.exeBLTU,
             Instructions.bgeu:self.exeBGEU,
-            Instructions.lb:self.exeSKIP,
-            Instructions.lh:self.exeSKIP,
-            Instructions.lw:self.exeSKIP,
-            Instructions.lbu:self.exeSKIP,
-            Instructions.lhu:self.exeSKIP,
-            Instructions.sb:self.exeSKIP,
-            Instructions.sh:self.exeSKIP,
-            Instructions.sw:self.exeSKIP,
+            Instructions.lb:self.exeLB,
+            Instructions.lh:self.exeLH,
+            Instructions.lw:self.exeLW,
+            Instructions.lbu:self.exeLBU,
+            Instructions.lhu:self.exeLHU,
+            Instructions.sb:self.exeSB,
+            Instructions.sh:self.exeSH,
+            Instructions.sw:self.exeSW,
             Instructions.addi:self.exeADDI,
             Instructions.slti:self.exeSLTI,
             Instructions.sltiu:self.exeSLTIU,
@@ -81,14 +82,15 @@ class Cpu:
             self.memaccess()
             self.writeback()
             sleep(delay)
+            if logging.root.level == logging.DEBUG :
+                print("")
             
     def fetch(self):
         self.mar.value=self.pc.value
         self.mdr.value=self.bus.read(self.mar.value)
         self.ir.value=self.mdr.value
-        if self.debug:
-            print("pc : "+hex(self.pc.value))
-            print("fetched : "+hex(self.ir.value))
+        logging.debug("pc : "+hex(self.pc.value))
+        logging.debug("fetched : "+hex(self.ir.value))
 
     def decode(self):
         self.opcode.value=self.ir.value&0x0000007f
@@ -100,16 +102,15 @@ class Cpu:
         self.shamt.value=self.rs2.value
         self.currentInstruction=self.isa.getInstruction(self.opcode,self.func3,self.func7)
         self.genimmediate()
-        if self.debug:
-            print("opcode={} | rd={} | rs1={} | rs2={} | func3={} | func7={} | shmat={} | imm={} | Inst={}".format(hex(self.opcode.value),self.rd.value,self.rs1.value,self.rs2.value,self.func3.value,self.func7.value,self.shamt.value,self.imm.value,self.currentInstruction))
+        logging.debug("opcode={} | rd={} | rs1={} | rs2={} | func3={} | func7={} | shmat={} | imm={} | Inst={}".format(hex(self.opcode.value),self.rd.value,self.rs1.value,self.rs2.value,hex(self.func3.value),hex(self.func7.value),self.shamt.value,self.imm.value,self.currentInstruction))
         
     def execute(self):
+        logging.debug("executng : "+str(self.opcodeExeMAP[self.currentInstruction]))
         self.opcodeExeMAP[self.currentInstruction]()
 
     def memaccess(self):
         if(self.currentInstruction in (Instructions.lb,Instructions.lbu,Instructions.lh,Instructions.lhu,Instructions.lw)):
             self.mdr.value=self.bus.read(self.mar.value)
-            self.pc.value+=4
             return 0
 
         elif(self.currentInstruction==Instructions.sb):
@@ -123,7 +124,6 @@ class Cpu:
             else:
                 size=0x8
             self.bus.write(self.mar.value,self.mdr.value,size)
-            self.pc.value+=4
             return 0
 
         elif(self.currentInstruction==Instructions.sh):
@@ -136,7 +136,6 @@ class Cpu:
                 print("Error : Unaligned half word write")
                 return 1
             self.bus.write(self.mar.value,self.mdr.value,size)
-            self.pc.value+=4
             return 0
         
         elif(self.currentInstruction==Instructions.sw):
@@ -147,17 +146,13 @@ class Cpu:
                 print("Error : Unaligned word write")
                 return 1
             self.bus.write(self.mar.value,self.mdr.value,size)
-            self.pc.value+=4
             return 0
 
         else:
             pass
 
     def writeback(self):
-        if(self.rd.value==0):
-            print("Info :  Write to reg X0")
-            return 0
-        elif(self.currentInstruction in (Instructions.lb,Instructions.lbu,Instructions.lh,Instructions.lhu,Instructions.lw)):
+        if(self.currentInstruction in (Instructions.lb,Instructions.lbu,Instructions.lh,Instructions.lhu,Instructions.lw)):
             tmp=c_uint(0)
             if(self.currentInstruction==Instructions.lb):
                 size=self.mar.value&0x3
@@ -212,16 +207,20 @@ class Cpu:
             return 0
         elif(self.currentInstruction not in(Instructions.beq,Instructions.bge,Instructions.bgeu,\
             Instructions.blt,Instructions.bltu,Instructions.bne,Instructions.sb,Instructions.sh,Instructions.sw)):
-            self.cpuregs[self.rd.value]=self.res.value
-            return 0
+            if(self.rd.value==0):
+                logging.info("Write to reg X0")
+                return 0
+            else:
+                self.cpuregs[self.rd.value]=self.res.value
+                return 0
         else:
             return 0
 
     ##execution functions for each instruction
     def exeEBRK(self):
         print("Ebreak/ecall executed")
-        pass
-
+        sys.exit(0)
+        
     def exeADD(self):
         self.res.value=self.cpuregs[self.rs1.value]+self.cpuregs[self.rs2.value]
         self.pc.value+=4
@@ -384,7 +383,7 @@ class Cpu:
 
     def exeSRLI(self):
         tmp=c_uint(self.cpuregs[self.rs1.value])
-        self.res.value=(tmp.value)>>self.shamt
+        self.res.value=(tmp.value)>>self.shamt.value
         self.pc.value+=4
     
     def exeSRA(self):
@@ -392,7 +391,7 @@ class Cpu:
         self.pc.value+=4
 
     def exeSRAI(self):
-        self.res.value=self.cpuregs[self.rs1.value]>>self.shamt
+        self.res.value=self.cpuregs[self.rs1.value]>>self.shamt.value
         self.pc.value+=4
     
     def exeSUB(self):
@@ -438,9 +437,8 @@ class Cpu:
             pass
         
 def test_cpu():
-    bus=Bus()
-    cpu = Cpu(0,bus)
-    cpu.ir.value=0x00177713
+    cpu = Cpu(0,None)
+    cpu.ir.value=0x060000ef
     cpu.decode()
     tmp=c_int(cpu.imm.value)
     print(hex(cpu.imm.value),tmp.value)
