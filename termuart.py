@@ -1,7 +1,13 @@
 class UART:
-    def read(address):
+    def read(self,address):
         if(address&0x0000000f==0):
-            return input()
-    def write(address,data,size):
+            return str(input())
+    def write(self,address,data,size):
         if(address&0x0000000f==0):
-            print(data,end="")
+            print(str(data),end=None)
+def test_uart():
+    uart=UART()
+    uart.write(0x40000000,uart.read(0x40000000),0)
+
+if __name__ == "__main__":
+    test_uart()

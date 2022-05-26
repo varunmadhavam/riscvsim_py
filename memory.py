@@ -47,13 +47,57 @@ class BRAM:
 #to run unit tests do pytest ./memory.py
 def test_bram():
     import random
-    bram=BRAM()
-    bram.init_mem("./test.bin")
+    bram=BRAM(binfile="test.bin")
     assert bram.RAM[0x00>>2] == 0x0040006f
     assert bram.RAM[0xe8>>2] == 0x00000537
     assert bram.RAM[0xc0>>2] == 0xfedff06f
+    
+    #word read / writes
     for i in range(0,100):
         addr=random.randrange(0,4096)
         val=random.randrange(0,0xffffffff)
         bram.write(addr,val,15)
         assert bram.read(addr) == val
+        val=0xaaaaaaaa
+        bram.write(addr,val,15)
+        assert bram.read(addr) == val
+        val=0x55555555
+        bram.write(addr,val,15)
+        assert bram.read(addr) == val
+
+    #byte read writes
+    for i in range(0,100):
+        addr=random.randrange(0,4096)
+        val=0xffffffff
+        bram.write(addr,val,15)
+        assert bram.read(addr) == val
+        size=random.choice([1,2,4,8])
+        val=0xaaaaaaaa
+        bram.write(addr,val,size)
+        val=bram.read(addr)
+        if(size==1):
+            assert val==0xffffffaa
+        elif(size==2):
+            assert val==0xffffaaff
+        elif(size==4):
+            assert val==0xffaaffff
+        else:
+            assert val==0xaaffffff
+            
+    #half word read writes
+    for i in range(0,100):
+        addr=random.randrange(0,4096)
+        val=0xffffffff
+        bram.write(addr,val,15)
+        assert bram.read(addr) == val
+        size=random.choice([3,12])
+        val=0xaaaaaaaa
+        bram.write(addr,val,size)
+        val=bram.read(addr)
+        if(size==3):
+            assert val==0xffffaaaa
+        else:
+            assert val==0xaaaaffff
+
+if __name__ == "__main__":
+    test_bram()
