@@ -30,7 +30,7 @@ class Cpu:
         self.res=c_int(0)
         self.currentInstruction=Instructions.noimp
 
-        self.isa=Isa()
+        self.isa = Isa()
         self.bus = sysbus
         
         self.opcodeExeMAP={
@@ -65,7 +65,7 @@ class Cpu:
             Instructions.sub:self.exeSUB,
             Instructions.sll:self.exeSLL,
             Instructions.slt:self.exeSLT,
-            Instructions.slti:self.exeSLTU,
+            Instructions.sltu:self.exeSLTU,
             Instructions.xor:self.exeXOR,
             Instructions.srl:self.exeSRL,
             Instructions.sra:self.exeSRA,
@@ -77,7 +77,7 @@ class Cpu:
 
     def dump_regs(self):
         for x in self.cpuregs:
-            print(hex(x),"   ",end="")
+            print(hex(x&(2**32-1)),"   ",end="")
         print("")
 
     def cpu_cyc(self,delay):
@@ -126,10 +126,13 @@ class Cpu:
                 size=0x1
             elif(loc==1):
                 size=0x2
+                self.mdr.value=self.mdr.value<<8
             elif(loc==2):
                 size=0x4
+                self.mdr.value=self.mdr.value<<16
             else:
                 size=0x8
+                self.mdr.value=self.mdr.value<<24
             self.bus.write(self.mar.value,self.mdr.value,size)
             return 0
 
@@ -139,9 +142,11 @@ class Cpu:
                 size=0x3
             elif(loc==2):
                 size=0xC
+                self.mdr.value=self.mdr.value<<16
             else:
                 logging.critical("MEMACCESS : Unaligned half word write")
                 return 1
+            logging.debug("Write to => "+str(hex(self.mar.value))+" "+str(hex(self.mdr.value))+" "+str(hex(size)))
             self.bus.write(self.mar.value,self.mdr.value,size)
             return 0
         
@@ -348,7 +353,7 @@ class Cpu:
         self.pc.value+=4
 
     def exeSLLI(self):
-        self.res.value=self.cpuregs[self.rs1.value]<<self.shamt
+        self.res.value=self.cpuregs[self.rs1.value]<<self.shamt.value
         self.pc.value+=4
 
     def exeSLT(self):
@@ -367,7 +372,7 @@ class Cpu:
     
     def exeSLTIU(self):
         tmp1=c_uint(self.cpuregs[self.rs1.value])
-        tmp2=c_uint(self.cpuregs[self.rs2.value])
+        tmp2=c_uint(self.imm.value)
         if(tmp1.value<tmp2.value):
             self.res.value=1
         else:
@@ -416,7 +421,7 @@ class Cpu:
     def exeSKIP(self):
         pass
 
-     #generate the immediate value based on the instruction
+    #generate the immediate value based on the instruction
     def genimmediate(self):
         if(self.opcode.value==0b00110111 or self.opcode.value==0b00010111): #U type
             self.imm.value=self.ir.value&0xfffff000

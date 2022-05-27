@@ -16,7 +16,7 @@ MEMORY {
 SECTIONS {
 	.memory : {
 		. = 0x000000;
-		start*(.text);
+		KEEP(*(.rst_vect));
 		*(.text);
 		*(*);
 		end = .;

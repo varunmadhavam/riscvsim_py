@@ -20,7 +20,7 @@ class Soc():
     def run(self,debug=True):
         if debug:
             logging.basicConfig(level="DEBUG")
-            self.cpu.cpu_cyc(1)
+            self.cpu.cpu_cyc(2)
         else:
             logging.basicConfig(level="CRITICAL")
             self.cpu.cpu_cyc(0)

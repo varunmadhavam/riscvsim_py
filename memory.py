@@ -12,7 +12,7 @@ class BRAM:
         if(addr<self.mem_size*4):
             return self.RAM[addr]
         else:
-            logging.critical("BRAM : Bus address out of range @ read : "+str(hex(address)) +" "+ str(self.mem_size*4))
+            logging.critical("BRAM : Bus address out of range @ read : "+str(hex(address&(2**32-1))) +" "+ str(self.mem_size*4))
             sys.exit(1)
 
     def init_mem(self,binfile):
@@ -31,6 +31,7 @@ class BRAM:
         addr=address>>2
         if(addr<self.mem_size*4):
             orig=self.RAM[addr]
+            logging.debug("Before write @ "+str(hex(address&(2**32-1)))+" => "+str(hex(orig&(2**32-1))))
             if(size&1):
                 orig&=~(0x000000ff)
                 orig|=data&0x000000ff
@@ -44,8 +45,9 @@ class BRAM:
                 orig&=~(0xff000000)
                 orig|=data&0xff000000
             self.RAM[addr]=orig
+            logging.debug("After write @ "+str(hex(address&(2**32-1)))+" => "+str(hex(self.RAM[addr]&(2**32-1))))
         else:
-            logging.critical("BRAM : Bus address out of range @ write : "+str(hex(address))+" "+ str(self.mem_size*4))
+            logging.critical("BRAM : Bus address out of range @ write : "+str(hex(address&(2**32-1)))+" "+ str(self.mem_size*4))
             sys.exit(1)
 
 #to run unit tests do pytest ./memory.py
