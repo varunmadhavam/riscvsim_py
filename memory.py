@@ -1,18 +1,22 @@
 from ctypes import *
 import logging
 import sys
+import math
 class BRAM:
-    def __init__(self,memsize=4096,binfile=""):
+    def __init__(self,memsize=4096,binfile=None):
         self.RAM=[0]*memsize
         self.mem_size=memsize
-        self.init_mem(binfile)
+        if binfile!=None:
+            self.init_mem(binfile)
 
     def read(self,address):
-        addr=address>>2
-        if(addr<self.mem_size*4):
+        addr=address&((int(2**math.log2(self.mem_size*4))-1))
+        logging.debug(str(hex(address))+" "+str(hex(addr))+" "+str(hex(int(2**math.log2(self.mem_size*4)))))
+        addr=addr>>2
+        if(addr<self.mem_size):
             return self.RAM[addr]
         else:
-            logging.critical("BRAM : Bus address out of range @ read : "+str(hex(address&(2**32-1))) +" "+ str(self.mem_size*4))
+            logging.critical("BRAM : Bus address out of range @ read : "+str(hex(addr&(2**32-1))) +" "+ str(hex(self.mem_size)))
             sys.exit(1)
 
     def init_mem(self,binfile):
@@ -28,8 +32,10 @@ class BRAM:
             addr+=1
 
     def write(self,address,data,size):
-        addr=address>>2
-        if(addr<self.mem_size*4):
+        addr=address&((int(2**math.log2(self.mem_size*4))-1))
+        logging.debug(str(hex(address))+" "+str(hex(addr))+" "+str(hex(int(2**math.log2(self.mem_size*4)))))
+        addr=addr>>2
+        if(addr<self.mem_size):
             orig=self.RAM[addr]
             logging.debug("Before write @ "+str(hex(address&(2**32-1)))+" => "+str(hex(orig&(2**32-1))))
             if(size&1):
@@ -47,7 +53,7 @@ class BRAM:
             self.RAM[addr]=orig
             logging.debug("After write @ "+str(hex(address&(2**32-1)))+" => "+str(hex(self.RAM[addr]&(2**32-1))))
         else:
-            logging.critical("BRAM : Bus address out of range @ write : "+str(hex(address&(2**32-1)))+" "+ str(self.mem_size*4))
+            logging.critical("BRAM : Bus address out of range @ write : "+str(hex(addr&(2**32-1)))+" "+ str(hex(self.mem_size)))
             sys.exit(1)
 
 #to run unit tests do pytest ./memory.py

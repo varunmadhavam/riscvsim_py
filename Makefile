@@ -3,13 +3,13 @@ all:
 	$(MAKE) -C sw
 	python3 soc.py
 test:
-	$(MAKE) -C sw/test
+	$(MAKE) -C sw test
 	python3 soc.py test
 disass:
 	$(MAKE) -C sw disass
 disasstest:
-	$(MAKE) -C sw/test disass
+	$(MAKE) -C sw disasstest
 clean:
 	$(MAKE) -C sw clean
 cleantest:
-	$(MAKE) -C sw/test clean
+	$(MAKE) -C sw cleantest

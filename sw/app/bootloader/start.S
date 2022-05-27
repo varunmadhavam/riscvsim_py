@@ -4,13 +4,12 @@
 // distribute this software, either in source code form or as a compiled
 // binary, for any purpose, commercial or non-commercial, and by any
 // means.
-
-	.section .text
-	.global main
+	.section .rst_vect
 
 reset_vec:
 	j start
 
+	.section .text
 /* Main program
  **********************************/
 
@@ -52,5 +51,6 @@ start:
 	/* set stack pointer */
 	la sp,0x7ff0
 
-	/* call hello C code */
-	jal ra,main
+	/* Jump to app */
+	li x1,0x10000000
+	jalr x0,0(x1)
