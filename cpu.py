@@ -12,7 +12,8 @@ class Cpu:
         #cpu gp registers
         self.cpuregs=array.array('i',(0 for i in range(0,32)))
         self.XLEN=32
-
+        #break point list
+        self.bp_list={}
         #cpu other registers
         self.pc=c_int(reset)
         self.ir=c_uint(0)
@@ -75,22 +76,32 @@ class Cpu:
             Instructions.ebreak:self.exeEBRK
         }
 
+    def add_bp(self,bp):
+        self.bp_list[bp]=0
+
+    def rm_bp(self,bp):
+        self.bp_list.pop(bp)
+
     def dump_regs(self):
-        for x in self.cpuregs:
-            print(hex(x&(2**32-1)),"   ",end="")
-        print("")
+        for i in range(0,32):
+            print("X{}={}".format(i,hex(self.cpuregs[i]&(2**32-1))))
 
     def cpu_cyc(self,delay):
-        while True:
-            self.fetch()
-            self.decode()
-            self.execute()
-            self.memaccess()
-            self.writeback()
-            sleep(delay)
-            if logging.root.level == logging.DEBUG :
-                self.dump_regs()
-                print("")
+        if self.pc.value in self.bp_list:
+            if self.bp_list[self.pc.value]==0:
+                self.bp_list[self.pc.value]=1
+                return 2
+            else:
+                self.bp_list[self.pc.value]=0
+        self.fetch()
+        self.decode()
+        self.execute()
+        self.memaccess()
+        self.writeback()
+        sleep(delay)
+        if logging.root.level == logging.DEBUG :
+            self.dump_regs()
+            print("")
             
     def fetch(self):
         self.mar.value=self.pc.value

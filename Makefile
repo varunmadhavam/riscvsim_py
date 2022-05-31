@@ -1,10 +1,10 @@
 
 all: 
 	$(MAKE) -C sw
-	python3 soc.py
+	python3 cli.py
 test:
 	$(MAKE) -C sw test
-	python3 soc.py test
+	python3 cli.py test
 disass:
 	$(MAKE) -C sw disass
 disasstest:

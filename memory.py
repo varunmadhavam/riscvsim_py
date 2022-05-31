@@ -55,6 +55,11 @@ class BRAM:
         else:
             logging.critical("BRAM : Bus address out of range @ write : "+str(hex(addr&(2**32-1)))+" "+ str(hex(self.mem_size)))
             sys.exit(1)
+            
+    def dumpmem(self,address,len=0):
+        addr=address>>2
+        for i in range(addr-len,addr+len):
+            print("MEM[{}]={}".format(hex(i,self.RAM[i])))
 
 #to run unit tests do pytest ./memory.py
 def test_bram():

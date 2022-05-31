@@ -5,9 +5,6 @@ from bus import Bus
 from termuart import UART
 from map import MemoryMap
 import logging
-import sys
-import signal
-import sys
 
 class Soc():
     def __init__(self,bootfile="./sw/firmware/firmware.bin",binfile=None):
@@ -20,33 +17,29 @@ class Soc():
         self.map.addperipheral(0x40000000,0x400000ff,self.uart)
         self.bus=Bus(self.map)
         self.cpu=Cpu(0x00000000,self.bus)
-    
-    def run(self,debug=True):
+        self.keeprunning=True
+
+    def setkeep(self,val):
+        self.keeprunning=val
+
+    def run(self,debug=True,mode="r"):
+        delay=2
         if debug:
             logging.basicConfig(level="DEBUG")
-            self.cpu.cpu_cyc(0)
+            if(mode=="s"):
+                self.cpu.cpu_cyc(delay)
+            elif(mode=="r"):
+                while self.cpu.cpu_cyc(delay)!=2 and self.keeprunning==True:
+                    pass
+                self.keeprunning==True
+
         else:
             logging.basicConfig(level="CRITICAL")
-            self.cpu.cpu_cyc(0)
+            if(mode=="s"):
+                self.cpu.cpu_cyc(0)
+            elif(mode=="r"):
+                while self.cpu.cpu_cyc(0)!=2 and self.keeprunning==True:
+                    pass
+                self.keeprunning==True
 
-def run():
-    n=len(sys.argv)
-    if   n==1:
-        bootfile="./sw/app/bootloader/firmware.bin"
-        binfile="./sw/app/main_app/firmware/firmware.bin"
-    elif n==2:
-        bootfile="./sw/test/firmware/firmware.bin"
-        binfile=None
-    else:
-        print("Usage : python3 soc.py [test] ")
-    soc=Soc(bootfile,binfile)
-    soc.run(debug=False)
-
-def signal_handler(signum, frame):
-    signal.signal(signum, signal.SIG_IGN)
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
-
-run()
 
