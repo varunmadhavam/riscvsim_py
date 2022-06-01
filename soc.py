@@ -1,5 +1,5 @@
 from select import select
-from memory import BRAM
+from memory import Memory
 from cpu import Cpu
 from bus import Bus
 from termuart import UART
@@ -8,8 +8,8 @@ import logging
 
 class Soc():
     def __init__(self,bootfile="./sw/firmware/firmware.bin",binfile=None):
-        self.bootrom=BRAM(32768,bootfile)
-        self.ram=BRAM(32768,binfile)
+        self.bootrom=Memory(32768,bootfile)
+        self.ram=Memory(32768,binfile)
         self.uart=UART()
         self.map=MemoryMap()
         self.map.addperipheral(0x00000000,0x0fffffff,self.bootrom)

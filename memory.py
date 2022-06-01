@@ -2,7 +2,7 @@ from ctypes import *
 import logging
 import sys
 import math
-class BRAM:
+class Memory:
     def __init__(self,memsize=4096,binfile=None):
         self.RAM=[0]*memsize
         self.mem_size=memsize
@@ -16,7 +16,7 @@ class BRAM:
         if(addr<self.mem_size):
             return self.RAM[addr]
         else:
-            logging.critical("BRAM : Bus address out of range @ read : "+str(hex(addr&(2**32-1))) +" "+ str(hex(self.mem_size)))
+            logging.critical("MEMORY : Bus address out of range @ read : "+str(hex(addr&(2**32-1))) +" "+ str(hex(self.mem_size)))
             sys.exit(1)
 
     def init_mem(self,binfile):
@@ -53,18 +53,20 @@ class BRAM:
             self.RAM[addr]=orig
             logging.debug("After write @ "+str(hex(address&(2**32-1)))+" => "+str(hex(self.RAM[addr]&(2**32-1))))
         else:
-            logging.critical("BRAM : Bus address out of range @ write : "+str(hex(addr&(2**32-1)))+" "+ str(hex(self.mem_size)))
+            logging.critical("MEMORY : Bus address out of range @ write : "+str(hex(addr&(2**32-1)))+" "+ str(hex(self.mem_size)))
             sys.exit(1)
             
     def dumpmem(self,address,len=0):
+        addr=address&((int(2**math.log2(self.mem_size*4))-1))
         addr=address>>2
-        for i in range(addr-len,addr+len):
-            print("MEM[{}]={}".format(hex(i,self.RAM[i])))
+        for i in range(addr-int(len/2),addr+int(len/2)+1):
+            if i>=0 and i<self.mem_size:
+                print("MEM[{}]={}".format(hex(i<<2),hex(self.RAM[i])))
 
 #to run unit tests do pytest ./memory.py
 def test_bram():
     import random
-    bram=BRAM(binfile="test.bin")
+    bram=Memory(binfile="test.bin")
     assert bram.RAM[0x00>>2] == 0x0040006f
     assert bram.RAM[0xe8>>2] == 0x00000537
     assert bram.RAM[0xc0>>2] == 0xfedff06f

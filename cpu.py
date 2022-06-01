@@ -9,13 +9,14 @@ import array
 
 class Cpu:
     def __init__(self,reset,sysbus:Bus):
+        self.resetval=reset
         #cpu gp registers
         self.cpuregs=array.array('i',(0 for i in range(0,32)))
         self.XLEN=32
         #break point list
         self.bp_list={}
         #cpu other registers
-        self.pc=c_int(reset)
+        self.pc=c_int(self.resetval)
         self.ir=c_uint(0)
         self.mar=c_uint(0)
         self.mdr=c_uint(0)
@@ -85,6 +86,14 @@ class Cpu:
     def dump_regs(self):
         for i in range(0,32):
             print("X{}={}".format(i,hex(self.cpuregs[i]&(2**32-1))))
+        print("PC={}".format(hex(self.pc.value)))
+        print("MAR={}".format(hex(self.mar.value)))
+        print("MDR={}".format(hex(self.mdr.value)))
+    
+    def reset(self):
+        for i in range(0,32):
+            self.cpuregs[i]=0
+        self.pc.value=self.resetval
 
     def cpu_cyc(self,delay):
         if self.pc.value in self.bp_list:
@@ -95,13 +104,16 @@ class Cpu:
                 self.bp_list[self.pc.value]=0
         self.fetch()
         self.decode()
-        self.execute()
+        ret=self.execute()
         self.memaccess()
         self.writeback()
         sleep(delay)
         if logging.root.level == logging.DEBUG :
             self.dump_regs()
             print("")
+        if(ret==2):
+            return 2
+        return 0
             
     def fetch(self):
         self.mar.value=self.pc.value
@@ -124,7 +136,7 @@ class Cpu:
         
     def execute(self):
         logging.debug("executng : "+str(self.opcodeExeMAP[self.currentInstruction]))
-        self.opcodeExeMAP[self.currentInstruction]()
+        return self.opcodeExeMAP[self.currentInstruction]()
 
     def memaccess(self):
         if(self.currentInstruction in (Instructions.lb,Instructions.lbu,Instructions.lh,Instructions.lhu,Instructions.lw)):
@@ -242,7 +254,7 @@ class Cpu:
     ##execution functions for each instruction
     def exeEBRK(self):
         logging.info("Ebreak/ecall executed")
-        sys.exit(0)
+        return 2
 
     def exeADD(self):
         self.res.value=self.cpuregs[self.rs1.value]+self.cpuregs[self.rs2.value]
