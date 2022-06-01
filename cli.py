@@ -9,7 +9,22 @@ def check_address_valid(addr):
     if(len(addr)!=8):
         return False
     return set(addr).issubset(string.hexdigits)
-
+def print_help():
+    print("")
+    print("q|x|exit|quit : Exit the Simulator")
+    print("r|run : Run till a break point is hit")
+    print("s|step : Single step")
+    print("dumpreg : Dump all registers")
+    print("dumpreg regno : Dump register regno where 0<=regno<32")
+    print("dumpmem addr : Dump word in memory pointed by addr where addr in hex without 0x prefix. eg 00000008")
+    print("dumpmem addr len: Dump len/2 words before and after the address pointed by addr from memory where addr in hex without 0x prefix. eg 00000008 and len is a decimal")
+    print("set addr : Sets a breakpoint @ address addr where addr in hex without 0x prefix. eg 00000008")
+    print("remove addr : Removes a breakpoint @ address addr where addr in hex without 0x prefix. eg 00000008")
+    print("reset : Resets the CPU model")
+    print("debug : Toggle debug mode")
+    print("dumpbp : List all the current set break points")
+    print("h|help : Prints this message")
+    print("")
 debug=False
 n=len(sys.argv)
 if n==1:
@@ -23,11 +38,13 @@ else:
 soc=Soc(bootfile,binfile)
 while 1:
     try:
-        completer = WordCompleter(['exit', 'dumpreg', 'dumpmem', 'run', 'step', 'set', 'remove', 'reset', 'debug','dumpbp'])
+        completer = WordCompleter(['exit', 'dumpreg', 'dumpmem', 'run', 'step', 'set', 'remove', 'reset', 'debug','dumpbp', 'help','quit'])
         user_input = prompt('> ',completer=completer,complete_while_typing=True)
-        if (user_input=='x' or user_input=='exit'):
+        if (user_input=='x' or user_input=='q' or user_input=='exit' or user_input=='quit'):
             exit(0)
-        if(user_input=="r" or user_input=="run"):
+        elif(user_input=="h" or user_input=="help"):
+            print_help()
+        elif(user_input=="r" or user_input=="run"):
             soc.run(debug=debug,mode="r")
         elif(user_input=="s" or user_input=="step"):
             soc.run(debug=debug,mode="s")

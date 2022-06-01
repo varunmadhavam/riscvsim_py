@@ -1,5 +1,4 @@
 from multiprocessing.connection import wait
-import sys
 from time import sleep
 from bus import Bus
 from ctypes import *
