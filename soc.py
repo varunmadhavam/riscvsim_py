@@ -17,10 +17,6 @@ class Soc():
         self.map.addperipheral(0x40000000,0x400000ff,self.uart)
         self.bus=Bus(self.map)
         self.cpu=Cpu(0x00000000,self.bus)
-        self.keeprunning=True
-
-    def setkeep(self,val):
-        self.keeprunning=val
 
     def run(self,debug=True,mode="r"):
         delay=2
@@ -29,17 +25,16 @@ class Soc():
             if(mode=="s"):
                 self.cpu.cpu_cyc(delay)
             elif(mode=="r"):
-                while self.cpu.cpu_cyc(delay)!=2 and self.keeprunning==True:
+                while self.cpu.cpu_cyc(delay)!=2:
                     pass
-                self.keeprunning==True
 
         else:
             logging.basicConfig(level="CRITICAL")
             if(mode=="s"):
                 self.cpu.cpu_cyc(0)
             elif(mode=="r"):
-                while self.cpu.cpu_cyc(0)!=2 and self.keeprunning==True:
+                while self.cpu.cpu_cyc(0)!=2:
                     pass
-                self.keeprunning==True
+                
 
 

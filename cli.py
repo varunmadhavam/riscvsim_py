@@ -23,7 +23,7 @@ else:
 soc=Soc(bootfile,binfile)
 while 1:
     try:
-        completer = WordCompleter(['exit', 'dumpreg', 'dumpmem', 'run', 'step', 'set', 'remove', 'reset', 'debug'])
+        completer = WordCompleter(['exit', 'dumpreg', 'dumpmem', 'run', 'step', 'set', 'remove', 'reset', 'debug','dumpbp'])
         user_input = prompt('> ',completer=completer,complete_while_typing=True)
         if (user_input=='x' or user_input=='exit'):
             exit(0)
@@ -38,6 +38,8 @@ while 1:
                     soc.cpu.dump_regs()
                 elif(res[0]=="reset"):
                     soc.cpu.reset()
+                elif(res[0]=="dumpbp"):
+                    soc.cpu.dump_bp()
                 elif(res[0]=="debug"):
                     if(debug):
                         debug=False
@@ -54,6 +56,12 @@ while 1:
                         perip=soc.map.getperipheral(int(res[1],16))
                         if(type(perip)==Memory):
                             perip.dumpmem(int(res[1],16),0)
+                elif(res[0]=="set"):
+                    if(check_address_valid(res[1])):
+                            soc.cpu.add_bp(int(res[1],16))
+                elif(res[0]=="remove"):
+                    if(check_address_valid(res[1])):
+                            soc.cpu.rm_bp(int(res[1],16))
             elif(len(res)==3):
                 if(res[0]=="dumpmem"):
                     if(check_address_valid(res[1])):

@@ -82,6 +82,10 @@ class Cpu:
 
     def rm_bp(self,bp):
         self.bp_list.pop(bp)
+    
+    def dump_bp(self):
+        for key in self.bp_list:
+            print(hex(key))
 
     def dump_regs(self):
         for i in range(0,32):
@@ -99,6 +103,7 @@ class Cpu:
         if self.pc.value in self.bp_list:
             if self.bp_list[self.pc.value]==0:
                 self.bp_list[self.pc.value]=1
+                print("Break point hit @ {}".format(hex(self.pc.value)))
                 return 2
             else:
                 self.bp_list[self.pc.value]=0
@@ -253,7 +258,7 @@ class Cpu:
 
     ##execution functions for each instruction
     def exeEBRK(self):
-        logging.info("Ebreak/ecall executed")
+        print("Ebreak/ecall executed")
         return 2
 
     def exeADD(self):
