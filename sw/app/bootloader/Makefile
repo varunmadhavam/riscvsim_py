@@ -1,4 +1,6 @@
-TOOLCHAIN_PREFIX=riscv-none-embed-
+
+RISCV_GNU_TOOLCHAIN_INSTALL_PREFIX = /opt/tools/compilers/riscV/rv32i
+TOOLCHAIN_PREFIX=$(RISCV_GNU_TOOLCHAIN_INSTALL_PREFIX)/bin/riscv32-unknown-elf-
 
 FIRMWARE_OBJS=start.o
 
@@ -18,6 +20,6 @@ start.o: start.S
 	$(TOOLCHAIN_PREFIX)gcc -c -mabi=ilp32 -march=rv32i -ffreestanding -nostdlib -nostartfiles -o $@ $<
 
 disass: firmware.elf
-	riscv-none-embed-objdump -d -M no-aliases -M numeric firmware.elf
+	$(TOOLCHAIN_PREFIX)objdump -d -M no-aliases -M numeric firmware.elf
 clean:
 	rm -f firmware.bin firmware.elf start.o firmware.map

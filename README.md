@@ -23,3 +23,6 @@ an riscv rv32i simulator in python inspired from https://github.com/johnwinans/r
 
 6. Help
     1. Within the simulator enter h|help to get the help menu.
+
+7. References
+    1. 
