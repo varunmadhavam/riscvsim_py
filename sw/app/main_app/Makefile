@@ -1,6 +1,6 @@
 
 RISCV_GNU_TOOLCHAIN_INSTALL_PREFIX = /opt/tools/compilers/riscV/rv32i
-FIRMWARE_OBJS = src/main.o src/ttyuart.o
+FIRMWARE_OBJS = src/main.o src/ttyuart.o src/syscalls.o
 TOOLCHAIN_PREFIX = $(RISCV_GNU_TOOLCHAIN_INSTALL_PREFIX)/bin/riscv32-unknown-elf-
 	
 all: firmware/firmware.bin firmware/firmware.srec

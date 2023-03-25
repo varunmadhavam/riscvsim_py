@@ -3,7 +3,8 @@ an riscv rv32i simulator in python inspired from https://github.com/johnwinans/r
 1. Pre requisites
     1. Install python3.
     2. Install Python Prompt Toolkit 3.0 : pip3 install prompt_toolkit.
-    3. Install RISC V crosscompiler and set its bin directory in the PATH env variable.
+    3. Install python readchar: pip3 install readchar
+    4. Install RISC V crosscompiler and set its bin directory in the PATH env variable.
 
 2. get the simulator
     1. git clone git@github.com:varunmadhavam/riscvsim_py.git
@@ -25,4 +26,6 @@ an riscv rv32i simulator in python inspired from https://github.com/johnwinans/r
     1. Within the simulator enter h|help to get the help menu.
 
 7. References
-    1. 
+    1. https://github.com/johnwinans/rvalp
+    2. https://github.com/YosysHQ/picorv32
+    3. https://github.com/openhwgroup/cv32e40p/blob/master/example_tb/core/custom/syscalls.c
