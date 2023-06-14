@@ -49,7 +49,7 @@ start:
 	addi x31, zero, 0
 
 	/* set stack pointer */
-	la sp,0x7ff0
+	li sp,0x7ff0
 
 	/* Jump to app */
 	li x1,0x10000000
